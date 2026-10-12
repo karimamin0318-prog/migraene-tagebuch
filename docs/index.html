@@ -1,0 +1,1454 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f4f5fa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#11121a" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Migräne">
+<meta name="description" content="Persönliches Tagebuch für Migräne und Kopfschmerzen">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+:root { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; font: 14px system-ui, sans-serif; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+<title>Migräne-Tagebuch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one-column phone app, sticky bottom tab bar, cards only for the day's input groups */
+:root {
+  --bg: #f4f5fa;
+  --surface: #ffffff;
+  --fg: #1b1d2a;
+  --muted: #676b82;
+  --line: #e2e4ee;
+  --mig: #6a3fd2;
+  --mig-soft: #ece5fc;
+  --on-mig: #ffffff;
+  --head: #d97f12;
+  --head-soft: #fcefdb;
+  --on-head: #ffffff;
+  --chip: #eef0f6;
+  --chip-on: #1b1d2a;
+  --on-chip-on: #ffffff;
+  --danger: #c23b3b;
+  --font-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --font-body: "Figtree", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --tabbar-h: 62px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11121a; --surface: #1a1c28; --fg: #eceef7; --muted: #9a9eb6; --line: #2a2d3e;
+    --mig: #9c7cff; --mig-soft: #2a2250; --on-mig: #12101f;
+    --head: #f3a548; --head-soft: #3a2a12; --on-head: #1d1305;
+    --chip: #242737; --chip-on: #eceef7; --on-chip-on: #11121a; --danger: #ff7a7a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11121a; --surface: #1a1c28; --fg: #eceef7; --muted: #9a9eb6; --line: #2a2d3e;
+  --mig: #9c7cff; --mig-soft: #2a2250; --on-mig: #12101f;
+  --head: #f3a548; --head-soft: #3a2a12; --on-head: #1d1305;
+  --chip: #242737; --chip-on: #eceef7; --on-chip-on: #11121a; --danger: #ff7a7a;
+  color-scheme: dark;
+}
+html, body { background: var(--bg); color: var(--fg); }
+body { font-family: var(--font-body); font-size: 16px; line-height: 1.45; -webkit-tap-highlight-color: transparent; }
+* { box-sizing: border-box; }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--mig); outline-offset: 2px; }
+
+.app { max-width: 560px; margin: 0 auto; padding-inline: 16px; padding-block: 14px calc(var(--tabbar-h) + 28px + env(safe-area-inset-bottom, 0px)); }
+.view { display: flex; flex-direction: column; gap: 18px; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h1 { font-size: 1.7rem; font-weight: 700; }
+h2 { font-size: 1.15rem; font-weight: 700; }
+.eyebrow { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+.muted { color: var(--muted); }
+.small { font-size: 0.85rem; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* Status */
+.status { font-size: 0.75rem; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.status i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); display: inline-block; }
+.status.ok i { background: #3aa66a; }
+.status.local i { background: var(--head); }
+.status.warn { align-items: flex-start; background: var(--head-soft); color: var(--fg); border-radius: 12px; padding: 10px 12px; font-size: 0.82rem; line-height: 1.4; }
+.status.warn i { margin-top: 5px; flex: none; }
+.legacy { background: var(--mig-soft); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px; font-size: 0.9rem; }
+.legacy strong { font-family: var(--font-display); font-size: 1rem; }
+
+/* Day header */
+.dayhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.dayhead .center { text-align: center; flex: 1; min-width: 0; }
+.dayhead .center button { background: none; border: 0; padding: 0; }
+.iconbtn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; font-size: 1.2rem; flex: none; }
+.iconbtn:disabled { opacity: 0.35; cursor: default; }
+.todaylink { border: 0; background: var(--chip); border-radius: 999px; padding: 3px 12px; font-size: 0.8rem; font-weight: 600; margin-top: 4px; }
+
+/* Main choice */
+.choice { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.bigbtn { border-radius: 22px; border: 2px solid transparent; padding: 22px 12px 18px; display: flex; flex-direction: column; align-items: center; gap: 8px; font-weight: 700; font-size: 1.05rem; transition: transform .12s ease, background .15s ease; min-height: 128px; justify-content: center; }
+.bigbtn:active { transform: scale(0.97); }
+.bigbtn svg { width: 40px; height: 40px; }
+.bigbtn.mig { background: var(--mig-soft); color: var(--mig); }
+.bigbtn.head { background: var(--head-soft); color: var(--head); }
+.bigbtn.mig[aria-pressed="true"] { background: var(--mig); color: var(--on-mig); }
+.bigbtn.head[aria-pressed="true"] { background: var(--head); color: var(--on-head); }
+.bigbtn small { font-weight: 500; font-size: 0.75rem; opacity: 0.85; }
+.nodaynote { text-align: center; font-size: 0.85rem; color: var(--muted); margin-top: -6px; }
+
+/* Intensity */
+.intensity { display: flex; flex-direction: column; gap: 8px; }
+.scale { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
+.scale button { border: 0; border-radius: 10px; padding: 9px 0; background: var(--chip); font-weight: 600; font-variant-numeric: tabular-nums; font-size: 0.9rem; }
+.scale button[aria-pressed="true"] { background: var(--cur, var(--mig)); color: var(--cur-on, var(--on-mig)); }
+
+/* Sections */
+details.sec { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 4px 16px; }
+details.sec[open] { padding-bottom: 16px; }
+details.sec > summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 12px 0; cursor: pointer; }
+details.sec > summary::-webkit-details-marker { display: none; }
+summary .count { background: var(--fg); color: var(--bg); border-radius: 999px; font-size: 0.75rem; font-weight: 700; padding: 1px 8px; font-variant-numeric: tabular-nums; }
+summary .chev { margin-left: auto; color: var(--muted); transition: transform .2s; }
+details[open] > summary .chev { transform: rotate(180deg); }
+.sec-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; margin: -2px 0 10px; font-size: 0.78rem; color: var(--muted); }
+.linkbtn { background: none; border: 0; color: var(--mig); font-weight: 600; font-size: 0.85rem; padding: 4px 0; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { border: 1px solid transparent; background: var(--chip); border-radius: 999px; padding: 8px 14px; font-size: 0.92rem; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+.chip[aria-pressed="true"] { background: var(--chip-on); color: var(--on-chip-on); }
+.chip { position: relative; overflow: hidden; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.chip.pressing::before { content: ""; position: absolute; inset: 0; background: currentColor; opacity: 0.18; transform-origin: left; animation: hold var(--hold, 1000ms) linear forwards; }
+@keyframes hold { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.chip.lifted { opacity: 0.25; }
+.chip.ghost { position: fixed; left: 0; top: 0; z-index: 30; pointer-events: none; margin: 0; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28); background: var(--chip-on); color: var(--on-chip-on); white-space: nowrap; }
+.trash { position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + 24px + env(safe-area-inset-bottom, 0px)); width: 68px; height: 68px; border-radius: 50%; background: var(--surface); border: 2px solid var(--danger); color: var(--danger); display: grid; place-items: center; z-index: 25; pointer-events: none; opacity: 0; transform: translate(-50%, 40px) scale(0.6); transition: opacity .18s, transform .18s, background .15s; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18); }
+.trash svg { width: 30px; height: 30px; }
+.trash-label { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 0.75rem; font-weight: 600; background: var(--fg); color: var(--bg); padding: 4px 10px; border-radius: 999px; }
+.trash.show { opacity: 1; transform: translate(-50%, 0) scale(1); }
+.trash.hot { background: var(--danger); color: #fff; transform: translate(-50%, 0) scale(1.2); }
+.toast button { background: none; border: 0; color: inherit; font-weight: 700; text-decoration: underline; padding: 0 0 0 10px; }
+.toast.action { pointer-events: auto; }
+.chip.add { background: transparent; border: 1.5px dashed var(--line); color: var(--muted); }
+.chip.custom::after { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .5; }
+.chip .x { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--danger); color: #fff; font-size: 0.8rem; margin-right: -6px; }
+.doses { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.doses:empty { display: none; }
+.dose { display: flex; align-items: center; gap: 10px; background: var(--bg); border-radius: 14px; padding: 6px 6px 6px 14px; }
+.dose-name { flex: 1; min-width: 0; font-weight: 600; font-size: 0.92rem; overflow-wrap: anywhere; }
+.dose-n { min-width: 2.4em; text-align: center; font-weight: 700; font-size: 1.05rem; }
+.step { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-size: 1.2rem; font-weight: 600; display: grid; place-items: center; }
+.step:disabled { opacity: 0.35; cursor: default; }
+.addform { display: flex; gap: 8px; width: 100%; }
+.addform input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 8px 14px; }
+.addform button { border: 0; border-radius: 999px; padding: 8px 16px; background: var(--fg); color: var(--bg); font-weight: 600; }
+.addform button.ghost { background: var(--chip); color: var(--fg); }
+
+textarea#note { width: 100%; min-height: 120px; border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: var(--bg); resize: vertical; line-height: 1.5; }
+.savehint { font-size: 0.75rem; color: var(--muted); margin-top: 6px; min-height: 1em; }
+
+/* Calendar */
+.calnav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.calnav h2 { font-size: 1.3rem; }
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.cal .wd { text-align: center; font-size: 0.72rem; color: var(--muted); font-weight: 600; padding-bottom: 2px; }
+.cell { aspect-ratio: 1; max-width: 100%; border-radius: 12px; border: 0; background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-variant-numeric: tabular-nums; font-weight: 600; font-size: 0.95rem; position: relative; }
+.cell.out { visibility: hidden; }
+.cell.future { opacity: 0.4; }
+.cell.mig { background: var(--mig); color: var(--on-mig); }
+.cell.head { background: var(--head); color: var(--on-head); }
+.cell.today { box-shadow: inset 0 0 0 2px var(--fg); }
+.cell .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0.55; }
+.cell .dot.none { opacity: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.82rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+.sw.mig { background: var(--mig); } .sw.head { background: var(--head); }
+.sw.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); margin-inline: 4px; }
+.monthsum { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tile b { font-family: var(--font-display); font-size: 1.7rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.tile.mig b { color: var(--mig); } .tile.head b { color: var(--head); }
+.tile span { font-size: 0.8rem; color: var(--muted); }
+
+/* Notes */
+.search { width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 11px 14px; }
+.monthgroup { display: flex; flex-direction: column; gap: 10px; }
+.note-item { text-align: left; width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.note-item .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.note-item p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.badge { font-size: 0.72rem; font-weight: 700; border-radius: 999px; padding: 2px 9px; }
+.badge.mig { background: var(--mig-soft); color: var(--mig); }
+.badge.head { background: var(--head-soft); color: var(--head); }
+.minichips { display: flex; flex-wrap: wrap; gap: 5px; }
+.minichips span { font-size: 0.74rem; background: var(--chip); border-radius: 999px; padding: 2px 8px; color: var(--muted); }
+.minichips span.med { background: var(--fg); color: var(--bg); }
+mark { background: var(--head-soft); color: inherit; border-radius: 3px; }
+
+/* Stats */
+.seg { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--chip); border-radius: 12px; padding: 3px; gap: 3px; }
+.seg button { border: 0; background: transparent; border-radius: 9px; padding: 7px 0; font-size: 0.85rem; font-weight: 600; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.chart { width: 100%; height: auto; display: block; }
+.chart text { fill: var(--muted); font-size: 10px; font-family: var(--font-body); }
+.rank { display: flex; flex-direction: column; gap: 10px; }
+.rank-row { display: grid; grid-template-columns: 22px 1fr auto; gap: 4px 10px; align-items: center; }
+.rank-row .pos { font-size: 0.8rem; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
+.rank-row .name { font-weight: 600; font-size: 0.92rem; min-width: 0; overflow-wrap: anywhere; }
+.rank-row .val { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 0.92rem; }
+.rank-row .bar { grid-column: 2 / 4; height: 7px; border-radius: 4px; background: var(--chip); overflow: hidden; }
+.rank-row .bar i { display: block; height: 100%; border-radius: 4px; background: var(--fill, var(--mig)); }
+.rank-row .sub { grid-column: 2 / 4; font-size: 0.75rem; color: var(--muted); margin-top: -4px; }
+.wkd { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: end; height: 110px; }
+.wkd div { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; font-size: 0.72rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.wkd i { display: block; width: 100%; border-radius: 6px 6px 3px 3px; background: var(--mig); min-height: 2px; }
+.empty { text-align: center; padding: 28px 12px; color: var(--muted); display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.empty strong { color: var(--fg); font-family: var(--font-display); font-size: 1.05rem; }
+.btn { border: 0; border-radius: 12px; padding: 11px 16px; background: var(--fg); color: var(--bg); font-weight: 600; }
+.btn.ghost { background: var(--chip); color: var(--fg); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.btnrow { display: flex; flex-wrap: wrap; gap: 8px; }
+.subhead { font-size: 0.8rem; font-weight: 700; margin-top: 4px; }
+.importbox { border: 1.5px dashed var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.importbox strong { overflow-wrap: anywhere; }
+.importbox .opt { display: flex; flex-direction: column; gap: 4px; }
+.importbox .opt span { font-size: 0.78rem; color: var(--muted); }
+.btn.danger { background: var(--danger); color: #fff; }
+.msg { font-size: 0.85rem; margin: 0; }
+.msg.err { color: var(--danger); }
+
+/* Tab bar */
+.tabbar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); z-index: 10; }
+.tabbar nav { max-width: 560px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); height: var(--tabbar-h); }
+.tabbar button { border: 0; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 0.7rem; font-weight: 600; color: var(--muted); }
+.tabbar button svg { width: 24px; height: 24px; }
+.tabbar button[aria-selected="true"] { color: var(--mig); }
+
+.toast { position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + 16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(10px); background: var(--fg); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-size: 0.85rem; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 20; white-space: nowrap; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- TAG -->
+  <section class="view" id="v-tag">
+    <div class="dayhead">
+      <button class="iconbtn" data-act="prevDay" aria-label="Vorheriger Tag">‹</button>
+      <div class="center">
+        <div class="eyebrow" id="dayEyebrow">Heute</div>
+        <h1 id="dayTitle">…</h1>
+        <div id="todayLinkWrap"></div>
+      </div>
+      <button class="iconbtn" data-act="nextDay" id="nextDayBtn" aria-label="Nächster Tag">›</button>
+    </div>
+
+    <div class="choice">
+      <button class="bigbtn mig" data-act="setType" data-v="migraine" id="btnMig" aria-pressed="false">
+        <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 4 11 22h9l-3 14 12-19h-9z"/></svg>
+        Migräne
+        <small id="migSub">heute</small>
+      </button>
+      <button class="bigbtn head" data-act="setType" data-v="headache" id="btnHead" aria-pressed="false">
+        <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="20" cy="22" r="11"/><path d="M9 9l4 4M31 9l-4 4M20 4v5"/></svg>
+        Kopfschmerzen
+        <small id="headSub">heute</small>
+      </button>
+    </div>
+    <div class="nodaynote" id="typeHint">Tippe an, was heute zutrifft. Nochmals tippen hebt es auf.</div>
+
+    <div class="intensity" id="intensityWrap" hidden>
+      <div class="eyebrow">Stärke (1 = leicht, 10 = unerträglich)</div>
+      <div class="scale" id="scale"></div>
+    </div>
+
+    <details class="sec" id="secM" open>
+      <summary><h2>Schmerzmittel &amp; Medikamente</h2><span class="count num" id="cntM" hidden></span><span class="chev">▾</span></summary>
+      <div class="sec-tools" id="toolsM"></div>
+      <div class="chips" id="chipsM"></div>
+      <div class="doses" id="doses"></div>
+    </details>
+
+    <details class="sec" id="secT" open>
+      <summary><h2>Mögliche Trigger</h2><span class="count num" id="cntT" hidden></span><span class="chev">▾</span></summary>
+      <div class="sec-tools" id="toolsT"></div>
+      <div class="chips" id="chipsT"></div>
+    </details>
+
+    <details class="sec" id="secS" open>
+      <summary><h2>Aura &amp; Vorboten</h2><span class="count num" id="cntS" hidden></span><span class="chev">▾</span></summary>
+      <div class="sec-tools" id="toolsS"></div>
+      <div class="chips" id="chipsS"></div>
+    </details>
+
+    <details class="sec" id="secN" open>
+      <summary><h2>Notiz</h2><span class="chev">▾</span></summary>
+      <textarea id="note" placeholder="Wie war der Tag? Dauer, Uhrzeit, ob das Mittel geholfen hat …"></textarea>
+      <div class="savehint" id="saveHint"></div>
+    </details>
+
+    <div class="legacy" id="legacyBox" hidden></div>
+    <div class="legacy" id="backupBox" hidden></div>
+    <div class="status" id="status"><i></i><span>Verbinde …</span></div>
+  </section>
+
+  <!-- KALENDER -->
+  <section class="view" id="v-cal" hidden>
+    <div class="calnav">
+      <button class="iconbtn" data-act="prevMonth" aria-label="Vorheriger Monat">‹</button>
+      <div style="text-align:center"><div class="eyebrow" id="calYear"></div><h2 id="calTitle"></h2></div>
+      <button class="iconbtn" data-act="nextMonth" aria-label="Nächster Monat">›</button>
+    </div>
+    <div class="cal" id="cal"></div>
+    <div class="legend"><span><i class="sw mig"></i>Migräne</span><span><i class="sw head"></i>Kopfschmerzen</span><span><i class="sw dot"></i>Trigger/Notiz erfasst</span></div>
+    <div class="monthsum" id="monthSum"></div>
+    <p class="muted small" style="margin:0">Tippe auf einen Tag, um ihn anzusehen oder nachzutragen.</p>
+  </section>
+
+  <!-- NOTIZEN -->
+  <section class="view" id="v-notes" hidden>
+    <h1>Notizen</h1>
+    <input class="search" id="noteSearch" type="search" placeholder="Notizen durchsuchen …" autocomplete="off">
+    <div id="notesList" class="view"></div>
+  </section>
+
+  <!-- STATISTIK -->
+  <section class="view" id="v-stats" hidden>
+    <h1>Statistik</h1>
+    <div class="seg" id="rangeSeg" role="group" aria-label="Zeitraum"></div>
+    <div id="statsBody" class="view"></div>
+  </section>
+</div>
+
+<div class="tabbar">
+  <nav role="tablist">
+    <button role="tab" data-tab="tag" aria-selected="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Tag</button>
+    <button role="tab" data-tab="cal" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Kalender</button>
+    <button role="tab" data-tab="notes" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h7M9 7h4"/></svg>Notizen</button>
+    <button role="tab" data-tab="stats" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Statistik</button>
+  </nav>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="trash" id="trash" aria-hidden="true">
+  <span class="trash-label">Hierher ziehen zum Löschen</span>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>
+</div>
+<input type="file" id="importFile" accept=".json,.csv,.txt,application/json,text/csv,text/plain" hidden>
+
+<script>
+(() => {
+  const DEFAULT_TRIGGERS = [
+    "Schlafrhythmus", "Stress", "Zu wenig gegessen", "Kein Frühstück", "Alkohol",
+    "Zu wenig getrunken", "Wetterumschwung", "Periode / Hormone", "Viel Bildschirmzeit",
+    "Grelles Licht", "Lärm", "Starke Gerüche", "Zu viel Koffein", "Koffeinentzug",
+    "Schokolade", "Gereifter Käse", "Rotwein", "Entspannung nach Stress", "Sport / Anstrengung",
+    "Reisen", "Verspannter Nacken", "Zu viel geschlafen"
+  ];
+  const DEFAULT_SYMPTOMS = [
+    "Sehstörungen", "Wortfindungsstörungen", "Hitzeempfinden", "Konzentrationsprobleme",
+    "Schwindel", "Übelkeit", "Leichter Kopfschmerz", "Nackenschmerzen", "Viel Gähnen", "Müdigkeit"
+  ];
+  const DEFAULT_MEDS = ["Ibuprofen 400 mg", "Zolmitriptan 2,5 mg"];
+  // die drei Auswahllisten pro Tag
+  const KINDS = {
+    M: { field: "meds", custom: "customMeds", hidden: "hiddenMeds", defaults: DEFAULT_MEDS, addLabel: "Anderes Medikament", ph: "z. B. Paracetamol 500 mg" },
+    T: { field: "triggers", custom: "customTriggers", hidden: "hiddenTriggers", defaults: DEFAULT_TRIGGERS, addLabel: "Eigener Trigger", ph: "Neuer Trigger" },
+    S: { field: "symptoms", custom: "customSymptoms", hidden: "hiddenSymptoms", defaults: DEFAULT_SYMPTOMS, addLabel: "Eigenes Symptom", ph: "Neues Symptom" }
+  };
+  const KIND_KEYS = Object.keys(KINDS);
+  // eigene Einträge + gelöschte Standardeinträge, beides in den Einstellungen gespeichert
+  const CUSTOM_KEYS = KIND_KEYS.flatMap(k => [KINDS[k].custom, KINDS[k].hidden]);
+  const TYPE_LABEL = { migraine: "Migräne", headache: "Kopfschmerzen" };
+  const CACHE_KEY = "migraene-tagebuch-v1";
+
+  // ---------- helpers ----------
+  const $ = id => document.getElementById(id);
+  const pad = n => String(n).padStart(2, "0");
+  const keyOf = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const parseKey = k => { const [y, m, d] = k.split("-").map(Number); return new Date(y, m - 1, d); };
+  const todayKey = () => keyOf(new Date());
+  const addDays = (k, n) => { const d = parseKey(k); d.setDate(d.getDate() + n); return keyOf(d); };
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const fmtLong = new Intl.DateTimeFormat("de-DE", { weekday: "long", day: "numeric", month: "long" });
+  const fmtMonth = new Intl.DateTimeFormat("de-DE", { month: "long" });
+  const fmtMonthShort = new Intl.DateTimeFormat("de-DE", { month: "short" });
+  const fmtNoteDate = new Intl.DateTimeFormat("de-DE", { weekday: "short", day: "numeric", month: "long" });
+  const daysBetween = (a, b) => Math.round((parseKey(b) - parseKey(a)) / 86400000);
+  const blankDay = () => ({ type: null, intensity: null, triggers: [], symptoms: [], meds: [], note: "" });
+  const isEmptyDay = d => !d || (!d.type && !d.triggers?.length && !d.symptoms?.length && !d.meds?.length && !(d.note || "").trim());
+  const strList = v => Array.isArray(v) ? v.filter(x => typeof x === "string") : [];
+  // Anzahl pro Medikament; nur Werte > 1 werden gespeichert (fehlend = 1)
+  const MAX_DOSE = 20;
+  function normCounts(raw, meds) {
+    const out = {};
+    meds.forEach(m => {
+      const n = raw && Number.isInteger(raw[m]) ? raw[m] : 1;
+      if (n > 1) out[m] = Math.min(n, MAX_DOSE);
+    });
+    return out;
+  }
+  const doseOf = (d, m) => d.medCounts?.[m] || 1;
+  const normDay = raw => ({
+    type: raw?.type === "migraine" || raw?.type === "headache" ? raw.type : null,
+    intensity: Number.isInteger(raw?.intensity) ? raw.intensity : null,
+    triggers: strList(raw?.triggers),
+    symptoms: strList(raw?.symptoms),
+    meds: strList(raw?.meds),
+    medCounts: normCounts(raw?.medCounts, strList(raw?.meds)),
+    note: typeof raw?.note === "string" ? raw.note : ""
+  });
+  const customLists = () => Object.fromEntries(CUSTOM_KEYS.map(c => [c, S[c]]));
+
+  // ---------- state ----------
+  const S = {
+    days: {}, customTriggers: [], customSymptoms: [], customMeds: [],
+    hiddenTriggers: [], hiddenSymptoms: [], hiddenMeds: [],
+    tab: "tag", date: todayKey(), calMonth: todayKey().slice(0, 7),
+    range: "90", query: "",
+    adding: { M: false, T: false, S: false },
+    mode: "loading",
+    importPreview: null, importConfirm: false, importing: false, importMsg: "", importErr: false
+  };
+
+  // Gerätespeicher: pro Konto getrennt, damit sich Daten mehrerer Personen
+  // auf einem Gerät nie vermischen. cacheKey ist erst gesetzt, wenn klar ist, wer hier ist.
+  const LOCAL_KEY = CACHE_KEY + ":local";
+  let cacheKey = null;
+  const readStore = key => { try { return JSON.parse(localStorage.getItem(key) || "null"); } catch (e) { return null; } };
+  function applyStored(c) {
+    S.days = {};
+    for (const [k, v] of Object.entries(c?.days || {})) S.days[k] = normDay(v);
+    CUSTOM_KEYS.forEach(ck => { S[ck] = strList(c?.[ck]); });
+  }
+  function loadPrefs() {
+    try {
+      const t = localStorage.getItem(CACHE_KEY + ":tab");
+      if (t && ["tag", "cal", "notes", "stats"].includes(t)) S.tab = t;
+    } catch (e) {}
+  }
+  function saveCache() {
+    if (!cacheKey) return;
+    try { localStorage.setItem(cacheKey, JSON.stringify({ days: S.days, ...customLists() })); } catch (e) {}
+  }
+
+  // ---------- persistence (db, private per user) ----------
+  let db = null, daysCol = null, settingsDoc = null, downloads = null;
+  const dirty = new Set();
+  const queues = {};
+  const timers = {};
+  const pending = {};
+  const deleting = new Set();
+
+  function enqueue(key, fn) {
+    const prev = queues[key] || Promise.resolve();
+    const next = prev.then(() => S.mode === "db" ? fn() : undefined).catch(err => {
+      console.warn("Speichern fehlgeschlagen", err);
+      if (err?.code === "invalid_argument" && S.mode === "db") goLocal("noWrite");
+      else if (err?.code === "quota_exceeded") toast("Speicher voll – bitte alte Einträge löschen");
+      else toast("Konnte nicht speichern");
+    });
+    queues[key] = next;
+    return next;
+  }
+
+  function persistDay(k, delay = 0) {
+    saveCache();
+    if (S.mode !== "db") return;
+    dirty.add(k);
+    const gen = (pending[k] = (pending[k] || 0) + 1);
+    clearTimeout(timers[k]);
+    timers[k] = setTimeout(() => {
+      enqueue("day:" + k, async () => {
+        const d = S.days[k];
+        const ref = daysCol.doc(k);
+        if (isEmptyDay(d)) await ref.delete();
+        else await ref.set({ ...d, updatedAt: Date.now() });
+      }).finally(() => { if (pending[k] === gen) dirty.delete(k); });
+    }, delay);
+  }
+
+  function persistSettings() {
+    saveCache();
+    if (S.mode !== "db") return;
+    dirty.add("__settings");
+    enqueue("settings", () => settingsDoc.set(customLists()))
+      .finally(() => dirty.delete("__settings"));
+  }
+
+  let unsubs = [];
+  let daysLoaded = false, settingsLoaded = false;
+  const isReady = () => S.mode === "local" || (S.mode === "db" && daysLoaded && settingsLoaded);
+  // Änderungen erst erlauben, wenn die echten Daten da sind – sonst würde
+  // ein Klick auf einen noch nicht geladenen Tag den gespeicherten Stand überschreiben.
+  function canChange() {
+    if (isReady()) return true;
+    toast("Einen Moment, deine Daten werden noch geladen");
+    return false;
+  }
+
+  async function connect() {
+    // eigenständige Version (z. B. GitHub Pages): alles bleibt auf dem Gerät
+    if (!window.claude?.use) {
+      goLocal("device");
+      try { navigator.storage?.persist?.(); } catch (e) {}
+      return;
+    }
+    let user = null;
+    try {
+      if (window.claude?.use) [db, user, downloads] = await Promise.all([claude.use("db"), claude.use("user"), claude.use("downloads")]);
+    } catch (e) { db = null; }
+    let uid = null, mayWrite = null;
+    try { uid = user ? await user.id() : null; } catch (e) {}
+    try { mayWrite = user ? await user.can("data.write") : null; } catch (e) {}
+    if (!db || !uid) { goLocal("noAccount"); return; }
+    if (mayWrite === false) { goLocal("noWrite"); return; }
+
+    cacheKey = CACHE_KEY + ":u:" + uid;
+    applyStored(readStore(cacheKey));
+    renderAll();
+
+    daysCol = db.doc("data/users/" + uid + "/diary").collection("days");
+    settingsDoc = db.doc("data/users/" + uid + "/settings");
+    S.mode = "db";
+    setMode("db");
+
+    unsubs.push(daysCol.onSnapshot(snap => {
+      if (S.mode !== "db") return;
+      // Zwischenstand aus dem Browser-Cache abwarten, bis der Server geantwortet hat
+      if (!daysLoaded && snap.metadata?.fromCache) return;
+      daysLoaded = true;
+      const remote = {};
+      snap.docs.forEach(d => { if (d.exists) remote[d.id] = normDay(d.data()); });
+      for (const k of dirty) if (S.days[k]) remote[k] = S.days[k];
+      for (const k of deleting) delete remote[k];
+      S.days = remote;
+      saveCache();
+      setMode("db");
+      renderAll();
+      checkLegacy();
+    }, err => { console.warn(err); if (err?.code === "revoked") goLocal("noWrite"); else setMode("offline"); }));
+
+    unsubs.push(settingsDoc.onSnapshot(snap => {
+      if (S.mode !== "db") return;
+      if (!settingsLoaded && snap.metadata?.fromCache) return;
+      const firstLoad = !settingsLoaded;
+      settingsLoaded = true;
+      if (dirty.has("__settings")) return;
+      if (snap.exists) {
+        const d = snap.data();
+        CUSTOM_KEYS.forEach(ck => { S[ck] = strList(d[ck]); });
+        saveCache();
+      } else if (firstLoad && CUSTOM_KEYS.some(ck => S[ck].length)) {
+        persistSettings();
+      }
+      setMode("db");
+      renderAll();
+      checkLegacy();
+    }, err => console.warn(err)));
+  }
+
+  // Einträge aus älteren App-Versionen, die nur im Gerätespeicher liegen und nicht im Konto:
+  // nie automatisch hochladen (könnten von einer anderen Person auf diesem Gerät stammen), sondern nachfragen.
+  let legacyChecked = false;
+  function checkLegacy() {
+    if (legacyChecked || S.mode !== "db" || !isReady()) return;
+    legacyChecked = true;
+    const old = readStore(CACHE_KEY);
+    if (!old) return;
+    const days = {};
+    for (const [k, v] of Object.entries(old.days || {})) {
+      const nd = normDay(v);
+      if (!isEmptyDay(nd) && (!S.days[k] || isEmptyDay(S.days[k]))) days[k] = nd;
+    }
+    const customs = Object.fromEntries(CUSTOM_KEYS.map(ck => [ck, strList(old[ck]).filter(x => !S[ck].includes(x))]));
+    const nDays = Object.keys(days).length;
+    const nCustom = KIND_KEYS.reduce((n, kind) => n + customs[KINDS[kind].custom].length, 0);
+    if (!nDays && !nCustom) { try { localStorage.removeItem(CACHE_KEY); } catch (e) {} return; }
+    S.legacy = { fileName: "Ältere Einträge auf diesem Gerät", days, ...customs, nDays, nCustom };
+    renderLegacy();
+  }
+  function renderLegacy() {
+    const box = $("legacyBox"), L = S.legacy;
+    box.hidden = !L;
+    if (!L) return;
+    const parts = [];
+    if (L.nDays) parts.push(`${L.nDays} ${L.nDays === 1 ? "Tag" : "Tage"}`);
+    if (L.nCustom) parts.push(`${L.nCustom} eigene ${L.nCustom === 1 ? "Eintrag" : "Einträge"} (z. B. Trigger)`);
+    box.innerHTML = `<strong>Ältere Einträge gefunden</strong>
+      <span>Auf diesem Gerät liegen noch ${parts.join(" und ")} aus einer früheren App-Version, die nicht in deinem Konto gespeichert sind. Wenn das deine Daten sind, übernimm sie.</span>
+      <div class="btnrow"><button class="btn" data-act="legacyTake">In mein Konto übernehmen</button><button class="btn ghost" data-act="legacyDrop">Verwerfen</button></div>`;
+  }
+  function dropLegacy() {
+    try {
+      localStorage.setItem(CACHE_KEY + ":verworfen", localStorage.getItem(CACHE_KEY) || "");
+      localStorage.removeItem(CACHE_KEY);
+    } catch (e) {}
+    S.legacy = null;
+    renderLegacy();
+  }
+
+  // Speichern im Konto ist nicht möglich → alles bleibt auf diesem Gerät
+  function goLocal(reason) {
+    const wasDb = S.mode === "db";
+    unsubs.forEach(u => { try { u(); } catch (e) {} });
+    unsubs = [];
+    cacheKey = LOCAL_KEY;
+    let stored = readStore(LOCAL_KEY);
+    // Daten aus älteren App-Versionen (gemeinsamer Speicher) einmalig übernehmen
+    if (!stored && !wasDb) stored = readStore(CACHE_KEY);
+    if (wasDb) {
+      // gerade Eingegebenes nicht verlieren: mit dem Gerätespeicher zusammenführen
+      const cur = { days: S.days, ...customLists() };
+      applyStored(stored);
+      Object.assign(S.days, cur.days);
+      CUSTOM_KEYS.forEach(ck => { S[ck] = [...S[ck], ...cur[ck].filter(x => !S[ck].includes(x))]; });
+    } else {
+      applyStored(stored);
+    }
+    S.localReason = reason;
+    S.mode = "local";
+    saveCache();
+    setMode("local");
+    renderAll();
+  }
+
+  function setMode(m) {
+    if (m !== "offline") S.mode = m;
+    const el = $("status");
+    const ready = isReady();
+    const device = m === "local" && S.localReason === "device";
+    el.className = "status " + ((m === "db" && ready) || device ? "ok" : m === "local" || m === "offline" ? "local warn" : "");
+    el.querySelector("span").textContent =
+      m === "offline" ? "Verbindung unterbrochen. Bitte die App neu laden, bevor du weiter einträgst." :
+      m === "db" ? (ready ? "Gespeichert in deinem Konto · nur für dich sichtbar" : "Lade deine Daten …") :
+      device ? "Gespeichert auf diesem Gerät · nur für dich sichtbar · funktioniert auch offline" :
+      m === "local" ? (S.localReason === "noWrite"
+        ? "Nur auf diesem Gerät gespeichert: Über diesen geteilten Link kann dein Konto nichts speichern. Exportiere regelmäßig eine Sicherung (Tab Statistik)."
+        : "Nur auf diesem Gerät gespeichert, weil du nicht bei Claude angemeldet bist. Exportiere regelmäßig eine Sicherung (Tab Statistik).")
+      : "Lade deine Daten …";
+    $("note").disabled = !ready;
+  }
+
+  // ---------- day mutations ----------
+  function getDay(k) { return S.days[k] || blankDay(); }
+  function mutate(k, fn, delay = 0) {
+    if (!canChange()) return false;
+    const d = normDay(getDay(k));
+    fn(d);
+    S.days[k] = normDay(d);
+    persistDay(k, delay);
+  }
+  const toggleIn = (arr, v) => { const i = arr.indexOf(v); i >= 0 ? arr.splice(i, 1) : arr.push(v); };
+
+  // ---------- toast ----------
+  let toastT;
+  function toast(msg, action) {
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.toggle("action", !!action);
+    if (action) {
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = action.label;
+      b.addEventListener("click", ev => { ev.stopPropagation(); t.classList.remove("show", "action"); action.fn(); });
+      t.appendChild(b);
+    }
+    t.classList.add("show");
+    clearTimeout(toastT);
+    toastT = setTimeout(() => t.classList.remove("show", "action"), action ? 5000 : 1700);
+  }
+
+  // ---------- render: TAG ----------
+  function chipHTML(kind, selected) {
+    const K = KINDS[kind], custom = S[K.custom];
+    const list = K.defaults.filter(x => !S[K.hidden].includes(x));
+    const adding = S.adding[kind];
+    const all = [...list, ...custom.filter(c => !list.includes(c))];
+    // auch ausgewählte Einträge zeigen, die nicht mehr in der Liste stehen
+    selected.forEach(s => { if (!all.includes(s)) all.push(s); });
+    let h = all.map(v => {
+      const isCustom = custom.includes(v);
+      return `<button class="chip${isCustom ? " custom" : ""}" data-act="tog" data-k="${kind}" data-v="${esc(v)}" aria-pressed="${selected.includes(v)}">${esc(v)}</button>`;
+    }).join("");
+    if (adding) {
+      h += `<form class="addform" data-form="${kind}"><input id="add${kind}Input" maxlength="40" placeholder="${K.ph}" autocomplete="off"><button type="submit">Hinzufügen</button><button type="button" class="ghost" data-act="cancelAdd" data-k="${kind}">Abbrechen</button></form>`;
+    } else {
+      h += `<button class="chip add" data-act="add" data-k="${kind}">+ ${K.addLabel}</button>`;
+    }
+    return h;
+  }
+
+  function renderTag() {
+    const k = S.date, d = getDay(k), tk = todayKey();
+    const diff = daysBetween(k, tk);
+    $("dayEyebrow").textContent = diff === 0 ? "Heute" : diff === 1 ? "Gestern" : diff === -1 ? "Morgen" : parseKey(k).getFullYear();
+    $("dayTitle").textContent = fmtLong.format(parseKey(k));
+    $("todayLinkWrap").innerHTML = diff !== 0 ? `<button class="todaylink" data-act="goToday">Zurück zu heute</button>` : "";
+    $("nextDayBtn").disabled = k >= tk;
+    const when = diff === 0 ? "heute" : "an diesem Tag";
+    $("migSub").textContent = d.type === "migraine" ? "eingetragen ✓" : when;
+    $("headSub").textContent = d.type === "headache" ? "eingetragen ✓" : when;
+    $("btnMig").setAttribute("aria-pressed", d.type === "migraine");
+    $("btnHead").setAttribute("aria-pressed", d.type === "headache");
+    $("typeHint").textContent = d.type ? "Nochmals tippen hebt die Auswahl auf." : (diff === 0 ? "Tippe an, was heute zutrifft." : "Tippe an, was an diesem Tag zutraf.");
+
+    $("intensityWrap").hidden = !d.type;
+    const sc = $("scale");
+    sc.style.setProperty("--cur", d.type === "headache" ? "var(--head)" : "var(--mig)");
+    sc.style.setProperty("--cur-on", d.type === "headache" ? "var(--on-head)" : "var(--on-mig)");
+    sc.innerHTML = Array.from({ length: 10 }, (_, i) => `<button data-act="setInt" data-v="${i + 1}" aria-pressed="${d.intensity === i + 1}">${i + 1}</button>`).join("");
+
+    KIND_KEYS.forEach(kind => {
+      const K = KINDS[kind], sel = d[K.field];
+      $("chips" + kind).innerHTML = chipHTML(kind, sel);
+      if (kind === "M") $("doses").innerHTML = sel.map(m => {
+        const n = doseOf(d, m);
+        return `<div class="dose"><span class="dose-name">${esc(m)}</span>
+          <button class="step" data-act="doseDec" data-v="${esc(m)}" aria-label="${n === 1 ? esc(m) + " entfernen" : "Eine weniger"}">${n === 1 ? "✕" : "−"}</button>
+          <span class="dose-n num" aria-live="polite">${n}×</span>
+          <button class="step" data-act="doseInc" data-v="${esc(m)}" aria-label="Eine mehr" ${n >= MAX_DOSE ? "disabled" : ""}>+</button></div>`;
+      }).join("");
+      const nHidden = S[K.hidden].length;
+      $("tools" + kind).innerHTML = `<span>Zum Löschen gedrückt halten und in den Papierkorb ziehen</span>` +
+        (nHidden ? `<button class="linkbtn" data-act="restore" data-k="${kind}">Gelöschte Standardeinträge zurückholen (${nHidden})</button>` : "");
+      const c = $("cnt" + kind);
+      c.hidden = !sel.length; c.textContent = sel.length;
+    });
+
+    const ta = $("note");
+    if (document.activeElement !== ta) ta.value = d.note;
+    KIND_KEYS.forEach(kind => { if (S.adding[kind]) $("add" + kind + "Input")?.focus(); });
+    renderBackupHint();
+  }
+  const resetChipUI = () => KIND_KEYS.forEach(kind => { S.adding[kind] = false; });
+
+  // Eintrag aus der Auswahlliste löschen (bereits erfasste Tage behalten ihn)
+  function deleteItem(kind, v) {
+    if (!canChange()) return;
+    const K = KINDS[kind];
+    const wasCustom = S[K.custom].includes(v);
+    if (wasCustom) S[K.custom] = S[K.custom].filter(x => x !== v);
+    else if (K.defaults.includes(v) && !S[K.hidden].includes(v)) S[K.hidden] = [...S[K.hidden], v];
+    else return;
+    persistSettings(); renderTag();
+    toast("„" + v + "“ gelöscht", {
+      label: "Rückgängig",
+      fn: () => {
+        if (wasCustom) { if (!S[K.custom].includes(v)) S[K.custom] = [...S[K.custom], v]; }
+        else S[K.hidden] = S[K.hidden].filter(x => x !== v);
+        persistSettings(); renderTag(); toast("„" + v + "“ ist wieder da");
+      }
+    });
+  }
+
+  // ---------- render: KALENDER ----------
+  function renderCal() {
+    const [y, m] = S.calMonth.split("-").map(Number);
+    const first = new Date(y, m - 1, 1);
+    $("calYear").textContent = y;
+    $("calTitle").textContent = fmtMonth.format(first);
+    const lead = (first.getDay() + 6) % 7;
+    const len = new Date(y, m, 0).getDate();
+    const tk = todayKey();
+    let h = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map(w => `<div class="wd">${w}</div>`).join("");
+    for (let i = 0; i < lead; i++) h += `<div class="cell out"></div>`;
+    let mig = 0, head = 0, logged = 0;
+    for (let dd = 1; dd <= len; dd++) {
+      const k = `${y}-${pad(m)}-${pad(dd)}`;
+      const d = S.days[k];
+      const cls = ["cell"];
+      if (d?.type === "migraine") { cls.push("mig"); mig++; }
+      if (d?.type === "headache") { cls.push("head"); head++; }
+      if (k === tk) cls.push("today");
+      if (k > tk) cls.push("future");
+      if (d && !isEmptyDay(d)) logged++;
+      const extra = d && (d.triggers.length || d.symptoms.length || d.meds.length || d.note.trim());
+      const label = fmtLong.format(parseKey(k)) + (d?.type ? ", " + TYPE_LABEL[d.type] : "");
+      h += `<button class="${cls.join(" ")}" data-act="openDay" data-v="${k}" ${k > tk ? "disabled" : ""} aria-label="${label}">${dd}<span class="dot${extra ? "" : " none"}"></span></button>`;
+    }
+    $("cal").innerHTML = h;
+    $("monthSum").innerHTML =
+      `<div class="tile mig"><b>${mig}</b><span>Migränetage im ${fmtMonth.format(first)}</span></div>` +
+      `<div class="tile head"><b>${head}</b><span>Kopfschmerztage im ${fmtMonth.format(first)}</span></div>`;
+  }
+
+  // ---------- render: NOTIZEN ----------
+  function highlight(text, q) {
+    const safe = esc(text);
+    if (!q) return safe;
+    const re = new RegExp("(" + q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/&/g, "&amp;").replace(/</g, "&lt;") + ")", "gi");
+    return safe.replace(re, "<mark>$1</mark>");
+  }
+  function renderNotes() {
+    const q = S.query.trim().toLowerCase();
+    const items = Object.entries(S.days)
+      .filter(([, d]) => d.note.trim())
+      .filter(([, d]) => !q || d.note.toLowerCase().includes(q) || [...d.meds, ...d.triggers, ...d.symptoms].some(t => t.toLowerCase().includes(q)))
+      .sort((a, b) => b[0].localeCompare(a[0]));
+    const box = $("notesList");
+    if (!items.length) {
+      box.innerHTML = q
+        ? `<div class="empty"><strong>Keine Treffer</strong><span>Keine Notiz enthält „${esc(S.query)}“.</span></div>`
+        : `<div class="empty"><strong>Noch keine Notizen</strong><span>Schreib im Tab „Tag“ unter „Notiz“ etwas auf. Alle Notizen sammeln sich dann hier, nach Monaten sortiert.</span><button class="btn" data-act="tab" data-v="tag">Notiz schreiben</button></div>`;
+      return;
+    }
+    const groups = {};
+    items.forEach(([k, d]) => { (groups[k.slice(0, 7)] ||= []).push([k, d]); });
+    box.innerHTML = Object.entries(groups).map(([ym, list]) => {
+      const [y, m] = ym.split("-").map(Number);
+      const title = fmtMonth.format(new Date(y, m - 1, 1)) + " " + y;
+      return `<div class="monthgroup"><div class="eyebrow">${title} · ${list.length} ${list.length === 1 ? "Notiz" : "Notizen"}</div>` +
+        list.map(([k, d]) => `
+          <button class="note-item" data-act="openDay" data-v="${k}">
+            <div class="top"><strong>${fmtNoteDate.format(parseKey(k))}</strong>${d.type ? `<span class="badge ${d.type === "migraine" ? "mig" : "head"}">${TYPE_LABEL[d.type]}${d.intensity ? " · " + d.intensity + "/10" : ""}</span>` : ""}</div>
+            <p>${highlight(d.note, S.query.trim())}</p>
+            ${(d.meds.length || d.triggers.length || d.symptoms.length) ? `<div class="minichips">${d.meds.map(t => `<span class="med">${doseOf(d, t) > 1 ? doseOf(d, t) + "× " : ""}${esc(t)}</span>`).join("")}${[...d.triggers, ...d.symptoms].map(t => `<span>${esc(t)}</span>`).join("")}</div>` : ""}
+          </button>`).join("") + `</div>`;
+    }).join("");
+  }
+
+  // ---------- render: STATISTIK ----------
+  const RANGES = [["30", "30 Tage"], ["90", "3 Monate"], ["365", "12 Monate"], ["all", "Gesamt"]];
+  function renderStats() {
+    $("rangeSeg").innerHTML = RANGES.map(([v, l]) => `<button data-act="range" data-v="${v}" aria-pressed="${S.range === v}">${l}</button>`).join("");
+    const tk = todayKey();
+    const keys = Object.keys(S.days).filter(k => k <= tk && !isEmptyDay(S.days[k])).sort();
+    const body = $("statsBody");
+    if (!keys.length) {
+      body.innerHTML = `<div class="empty"><strong>Noch keine Daten</strong><span>Sobald du Migräne- oder Kopfschmerztage einträgst, siehst du hier, wie oft sie vorkommen und welche Trigger und Symptome am häufigsten sind.</span><button class="btn" data-act="tab" data-v="tag">Ersten Tag eintragen</button></div>` + dataPanel();
+      return;
+    }
+    const start = S.range === "all" ? keys[0] : addDays(tk, -(Number(S.range) - 1));
+    const inR = keys.filter(k => k >= start);
+    const spanDays = daysBetween(start, tk) + 1;
+    const months = Math.max(1, spanDays / 30.44);
+    const mig = inR.filter(k => S.days[k].type === "migraine");
+    const head = inR.filter(k => S.days[k].type === "headache");
+    const attacks = [...mig, ...head];
+    const ints = attacks.map(k => S.days[k].intensity).filter(Boolean);
+    const avgInt = ints.length ? (ints.reduce((a, b) => a + b, 0) / ints.length) : null;
+    const allMig = keys.filter(k => S.days[k].type === "migraine");
+    const lastMig = allMig[allMig.length - 1];
+    const since = lastMig ? daysBetween(lastMig, tk) : null;
+    const f1 = n => n.toLocaleString("de-DE", { maximumFractionDigits: 1, minimumFractionDigits: n < 10 && n % 1 ? 1 : 0 });
+
+    let h = `<div class="tiles">
+      <div class="tile mig"><b>${mig.length}</b><span>Migränetage</span></div>
+      <div class="tile head"><b>${head.length}</b><span>Kopfschmerztage</span></div>
+      <div class="tile"><b>${f1(mig.length / months)}</b><span>Migränetage pro Monat (Ø)</span></div>
+      <div class="tile"><b>${since === null ? "–" : since}</b><span>${since === null ? "Noch keine Migräne erfasst" : since === 1 ? "Tag seit letzter Migräne" : "Tage seit letzter Migräne"}</span></div>
+      <div class="tile"><b>${f1(head.length / months)}</b><span>Kopfschmerztage pro Monat (Ø)</span></div>
+      <div class="tile"><b>${avgInt === null ? "–" : f1(avgInt)}</b><span>Ø Stärke (von 10)</span></div>
+    </div>`;
+
+    h += `<div class="panel"><h2>Verlauf pro Monat</h2>${monthChart(start, tk)}<div class="legend"><span><i class="sw mig"></i>Migräne</span><span><i class="sw head"></i>Kopfschmerzen</span></div></div>`;
+
+    h += rankPanel("Häufigste Trigger", mig, "triggers", "var(--mig)",
+      "Noch keine Trigger an Migränetagen erfasst. Wähle im Tab „Tag“ aus, was der Migräne vorausging.");
+    h += rankPanel("Häufigste Aura-Symptome", mig, "symptoms", "var(--head)",
+      "Noch keine Aura-Symptome an Migränetagen erfasst.");
+
+    h += medPanel(inR, months);
+
+    h += weekdayPanel("Migräne nach Wochentag", mig, "var(--mig)", "Migräneattacken");
+    h += weekdayPanel("Kopfschmerzen nach Wochentag", head, "var(--head)", "Kopfschmerztage");
+
+    body.innerHTML = h + dataPanel();
+  }
+
+  function weekdayPanel(title, keys, color, noun) {
+    const wd = [0, 0, 0, 0, 0, 0, 0];
+    keys.forEach(k => wd[(parseKey(k).getDay() + 6) % 7]++);
+    const wmax = Math.max(1, ...wd);
+    const head = `<h2>${title}</h2>`;
+    if (!keys.length) return `<div class="panel">${head}<p class="muted small" style="margin:0">Keine ${noun} im gewählten Zeitraum.</p></div>`;
+    return `<div class="panel">${head}<div class="wkd">${["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((n, i) =>
+      `<div><span class="num">${wd[i]}</span><i style="height:${(wd[i] / wmax) * 70}%;background:${color}"></i>${n}</div>`).join("")}</div></div>`;
+  }
+
+  function medPanel(inR, months) {
+    const withMeds = inR.filter(k => S.days[k].meds.length);
+    const head = `<h2>Schmerzmittel &amp; Medikamente</h2>`;
+    if (!withMeds.length) return `<div class="panel">${head}<p class="muted small" style="margin:0">Im gewählten Zeitraum keine Medikamente erfasst.</p></div>`;
+    const cnt = {}, byMig = {}, byHead = {}, doses = {};
+    let totalDoses = 0;
+    withMeds.forEach(k => {
+      const d = S.days[k];
+      d.meds.forEach(m => {
+        cnt[m] = (cnt[m] || 0) + 1;
+        doses[m] = (doses[m] || 0) + doseOf(d, m);
+        totalDoses += doseOf(d, m);
+        if (d.type === "migraine") byMig[m] = (byMig[m] || 0) + 1;
+        if (d.type === "headache") byHead[m] = (byHead[m] || 0) + 1;
+      });
+    });
+    const perMonth = withMeds.length / months;
+    const f1 = n => n.toLocaleString("de-DE", { maximumFractionDigits: 1 });
+    const rows = Object.entries(cnt).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "de"));
+    const max = rows[0][1];
+    return `<div class="panel">${head}
+      <div class="tiles">
+        <div class="tile"><b>${withMeds.length}</b><span>Tage mit Medikamenten</span></div>
+        <div class="tile"><b>${f1(perMonth)}</b><span>Tage pro Monat (Ø)</span></div>
+        <div class="tile"><b>${totalDoses}</b><span>Einnahmen insgesamt</span></div>
+        <div class="tile"><b>${f1(totalDoses / withMeds.length)}</b><span>Einnahmen pro Medikamententag (Ø)</span></div>
+      </div>
+      ${perMonth >= 10 ? `<p class="msg err">Im Schnitt an 10 oder mehr Tagen pro Monat Schmerzmittel. Das solltest du mit deiner Ärztin oder deinem Arzt besprechen.</p>` : ""}
+      <div class="rank">${rows.map(([n, c], i) => `
+      <div class="rank-row" style="--fill:var(--fg)">
+        <span class="pos">${i + 1}.</span><span class="name">${esc(n)}</span><span class="val">${c} ${c === 1 ? "Tag" : "Tage"}</span>
+        <span class="bar"><i style="width:${(c / max) * 100}%"></i></span>
+        <span class="sub">${doses[n]} ${doses[n] === 1 ? "Einnahme" : "Einnahmen"} · an ${byMig[n] || 0} Migräne- und ${byHead[n] || 0} Kopfschmerztagen</span>
+      </div>`).join("")}</div></div>`;
+  }
+
+  // ---------- Import / Export ----------
+  function dataPanel() {
+    const p = S.importPreview;
+    let h = `<div class="panel" id="dataPanel"><h2>Daten exportieren &amp; importieren</h2>`;
+    if (p) {
+      const keys = Object.keys(p.days).sort();
+      const nMig = keys.filter(k => p.days[k].type === "migraine").length;
+      const nHead = keys.filter(k => p.days[k].type === "headache").length;
+      const overlap = keys.filter(k => S.days[k] && !isEmptyDay(S.days[k])).length;
+      const existing = Object.keys(S.days).filter(k => !isEmptyDay(S.days[k])).length;
+      const fmtD = k => parseKey(k).toLocaleDateString("de-DE");
+      h += `<div class="importbox">
+        <strong>${esc(p.fileName)}</strong>
+        <span class="small">${keys.length} ${keys.length === 1 ? "Tag" : "Tage"} mit Einträgen (${fmtD(keys[0])} bis ${fmtD(keys[keys.length - 1])}): ${nMig} × Migräne, ${nHead} × Kopfschmerzen.${overlap ? ` ${overlap} davon gibt es schon in der App.` : ""}${p.customMeds.length + p.customTriggers.length + p.customSymptoms.length ? ` Dazu ${p.customMeds.length} eigene Medikamente, ${p.customTriggers.length} eigene Trigger und ${p.customSymptoms.length} eigene Symptome.` : ""}</span>`;
+      if (S.importing) {
+        h += `<p class="msg">${esc(S.importMsg)}</p>`;
+      } else if (S.importConfirm) {
+        h += `<p class="msg err">Alle ${existing} bisherigen Einträge werden gelöscht und durch die Datei ersetzt. Das lässt sich nicht rückgängig machen.</p>
+          <div class="btnrow"><button class="btn danger" data-act="importReplaceGo">Ja, alles ersetzen</button><button class="btn ghost" data-act="importBack">Zurück</button></div>`;
+      } else {
+        h += `<div class="opt"><button class="btn" data-act="importMerge">Zusammenführen</button><span>Neue Tage kommen dazu. Tage, die es schon gibt, werden mit der Datei überschrieben.</span></div>`;
+        if (existing) h += `<div class="opt"><button class="btn ghost" data-act="importReplace">Alles ersetzen</button><span>Löscht deine bisherigen Einträge und übernimmt nur die Datei.</span></div>`;
+        h += `<div><button class="linkbtn" data-act="importCancel">Abbrechen</button></div>`;
+      }
+      h += `</div>`;
+    } else {
+      h += `<p class="muted small" style="margin:0">Die <b>Sicherung</b> enthält alles: alle Tage und deine Einstellungen, also eigene Medikamente, Trigger und Symptome sowie gelöschte Standardeinträge. Beim Import wird beides wiederhergestellt. Die <b>Tabelle</b> (CSV) öffnet sich in Excel oder Numbers, praktisch für den Arzttermin.</p>
+        <div class="subhead">Exportieren</div>
+        <div class="btnrow">
+          <button class="btn ghost" data-act="exportJson">Sicherung speichern</button>
+          <button class="btn ghost" data-act="exportCsv">Tabelle (CSV)</button>
+        </div>
+        ${lastBackupText()}
+        <div class="subhead">Importieren</div>
+        <div class="btnrow"><button class="btn" data-act="importPick">Datei auswählen …</button></div>
+        <span class="muted small">Sicherungsdatei (.json) oder Tabelle (.csv) aus dieser App. Vor dem Import siehst du, was übernommen wird.</span>`;
+      if (S.importMsg) h += `<p class="msg${S.importErr ? " err" : ""}">${esc(S.importMsg)}</p>`;
+    }
+    return h + `</div>`;
+  }
+
+  function jsonExport() {
+    const days = {};
+    Object.keys(S.days).sort().forEach(k => { if (!isEmptyDay(S.days[k])) days[k] = S.days[k]; });
+    return JSON.stringify({
+      app: "migraene-tagebuch", version: 1, exportedAt: new Date().toISOString(),
+      ...customLists(), days
+    }, null, 2);
+  }
+
+  function parseCSV(text) {
+    const firstLine = text.split(/\r?\n/)[0] || "";
+    const delim = (firstLine.match(/;/g) || []).length >= (firstLine.match(/,/g) || []).length ? ";" : ",";
+    const rows = []; let row = [], field = "", q = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) {
+        if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else q = false; }
+        else field += c;
+      } else if (c === '"') q = true;
+      else if (c === delim) { row.push(field); field = ""; }
+      else if (c === "\n" || c === "\r") {
+        if (c === "\r" && text[i + 1] === "\n") i++;
+        row.push(field); rows.push(row); row = []; field = "";
+      } else field += c;
+    }
+    if (field || row.length) { row.push(field); rows.push(row); }
+    return rows.filter(r => r.some(x => x.trim()));
+  }
+
+  function normDate(s) {
+    s = String(s || "").trim();
+    let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (m) return `${m[1]}-${pad(+m[2])}-${pad(+m[3])}`;
+    m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+    if (m) return `${m[3]}-${pad(+m[2])}-${pad(+m[1])}`;
+    return null;
+  }
+
+  function parseImport(text, fileName) {
+    text = text.replace(/^﻿/, "");
+    const days = {};
+    const customs = Object.fromEntries(CUSTOM_KEYS.map(ck => [ck, []]));
+    if (/^\s*[\[{]/.test(text)) {
+      let obj;
+      try { obj = JSON.parse(text); } catch (e) { throw new Error("Die Datei ist kein gültiges JSON."); }
+      const src = Array.isArray(obj) ? obj : obj.days;
+      const entries = Array.isArray(src) ? src.map(d => [d?.date, d]) : Object.entries(src || {});
+      entries.forEach(([k, d]) => { const key = normDate(k); if (key) { const nd = normDay(d); if (!isEmptyDay(nd)) days[key] = nd; } });
+      CUSTOM_KEYS.forEach(ck => { customs[ck] = strList(obj[ck]); });
+    } else {
+      const rows = parseCSV(text);
+      if (rows.length < 2) throw new Error("In der Tabelle wurden keine Einträge gefunden.");
+      const head = rows[0].map(h => h.trim().toLowerCase());
+      const col = (...names) => head.findIndex(h => names.some(n => h.startsWith(n)));
+      const iDate = col("datum", "date"), iType = col("art", "typ", "type"), iInt = col("stärke", "staerke", "intensity"),
+            iTrig = col("trigger"), iSym = col("aura", "symptom"), iNote = col("notiz", "note"),
+            iMed = col("medikament", "schmerzmittel", "meds");
+      if (iDate < 0) throw new Error("Die Tabelle braucht eine Spalte „Datum“.");
+      const list = v => String(v || "").split(/\s*[,|]\s*/).map(x => x.trim()).filter(Boolean);
+      // Medikamente enthalten Kommas („2,5 mg“), daher nur an „|“ trennen
+      const medList = v => String(v || "").split(/\s*\|\s*/).map(x => x.trim()).filter(Boolean);
+      // „2x Ibuprofen 400 mg“ → Name + Anzahl
+      const parseMeds = items => {
+        const meds = [], medCounts = {};
+        items.forEach(it => {
+          const m = it.match(/^(\d+)\s*[x×]\s+(.+)$/i);
+          const name = m ? m[2].trim() : it, n = m ? +m[1] : 1;
+          if (!meds.includes(name)) meds.push(name);
+          if (n > 1) medCounts[name] = n;
+        });
+        return { meds, medCounts };
+      };
+      rows.slice(1).forEach(r => {
+        const key = normDate(r[iDate]); if (!key) return;
+        const t = String(iType >= 0 ? r[iType] : "").trim().toLowerCase();
+        const n = parseInt(iInt >= 0 ? r[iInt] : "", 10);
+        const d = normDay({
+          type: t.startsWith("mig") ? "migraine" : t.startsWith("kopf") || t.startsWith("head") ? "headache" : null,
+          intensity: n >= 1 && n <= 10 ? n : null,
+          triggers: iTrig >= 0 ? list(r[iTrig]) : [],
+          symptoms: iSym >= 0 ? list(r[iSym]) : [],
+          ...parseMeds(iMed >= 0 ? medList(r[iMed]) : []),
+          note: iNote >= 0 ? r[iNote] || "" : ""
+        });
+        if (!isEmptyDay(d)) days[key] = d;
+      });
+    }
+    // eigene Einträge, die nicht in den Standardlisten stehen, übernehmen
+    Object.values(days).forEach(d => KIND_KEYS.forEach(kind => {
+      const K = KINDS[kind], c = customs[K.custom];
+      d[K.field].forEach(v => { if (!K.defaults.includes(v) && !c.includes(v)) c.push(v); });
+    }));
+    if (!Object.keys(days).length) throw new Error("In der Datei wurden keine Tage mit Einträgen gefunden.");
+    return { fileName, days, ...customs };
+  }
+
+  async function runImport(replace) {
+    const p = S.importPreview; if (!p || S.importing || !canChange()) return;
+    const keys = Object.keys(p.days).sort();
+    const toDelete = replace ? Object.keys(S.days).filter(k => !p.days[k]) : [];
+    const union = (a, b) => [...a, ...b.filter(x => !a.includes(x))];
+    CUSTOM_KEYS.forEach(ck => { S[ck] = replace ? p[ck].slice() : union(S[ck], p[ck]); });
+    if (replace) S.days = {};
+    keys.forEach(k => { S.days[k] = p.days[k]; });
+    saveCache();
+
+    if (S.mode === "db") {
+      S.importing = true;
+      keys.forEach(k => dirty.add(k));
+      toDelete.forEach(k => deleting.add(k));
+      const total = keys.length + toDelete.length;
+      let done = 0, failed = 0;
+      const step = () => { S.importMsg = `Wird gespeichert … ${done} von ${total}`; if (S.tab === "stats") renderStats(); };
+      step();
+      for (const k of toDelete) {
+        try { await enqueueRaw("day:" + k, () => daysCol.doc(k).delete()); } catch (e) { failed++; }
+        deleting.delete(k); done++; if (done % 10 === 0) step();
+      }
+      for (const k of keys) {
+        try { await enqueueRaw("day:" + k, () => daysCol.doc(k).set({ ...p.days[k], updatedAt: Date.now() })); }
+        catch (e) { failed++; if (e?.code === "quota_exceeded") break; }
+        dirty.delete(k); done++; if (done % 10 === 0) step();
+      }
+      keys.forEach(k => dirty.delete(k));
+      S.importing = false;
+      persistSettings();
+      S.importMsg = failed ? `${keys.length - failed} von ${keys.length} Tagen importiert. ${failed} konnten nicht gespeichert werden, bitte nochmal importieren.` : `${keys.length} ${keys.length === 1 ? "Tag" : "Tage"} importiert.`;
+      S.importErr = !!failed;
+    } else {
+      persistSettings();
+      S.importMsg = `${keys.length} ${keys.length === 1 ? "Tag" : "Tage"} importiert.`;
+      S.importErr = false;
+    }
+    S.importPreview = null; S.importConfirm = false;
+    toast("Import abgeschlossen");
+    renderAll();
+  }
+
+  // wie enqueue, aber Fehler werden an den Aufrufer weitergereicht
+  function enqueueRaw(key, fn) {
+    const prev = queues[key] || Promise.resolve();
+    const next = prev.catch(() => {}).then(fn);
+    queues[key] = next.catch(() => {});
+    return next;
+  }
+
+  // ---------- Sicherung: Datei speichern + Erinnerung ----------
+  const BACKUP_KEY = CACHE_KEY + ":lastBackup", SNOOZE_KEY = CACHE_KEY + ":backupSnooze";
+  const readNum = key => { try { return Number(localStorage.getItem(key)) || 0; } catch (e) { return 0; } };
+  const writeNum = (key, v) => { try { localStorage.setItem(key, String(v)); } catch (e) {} };
+  function lastBackupText() {
+    const t = readNum(BACKUP_KEY);
+    if (!t) return `<span class="muted small">Noch keine Sicherung gespeichert.</span>`;
+    const days = Math.floor((Date.now() - t) / 86400000);
+    return `<span class="muted small">Letzte Sicherung: ${days === 0 ? "heute" : days === 1 ? "gestern" : "vor " + days + " Tagen"}</span>`;
+  }
+  function markBackedUp() { writeNum(BACKUP_KEY, Date.now()); renderBackupHint(); }
+
+  async function giveFile(kind) {
+    const isJson = kind === "json";
+    const data = isJson ? jsonExport() : csvExport();
+    const filename = `migraene-tagebuch-${todayKey()}.${isJson ? "json" : "csv"}`;
+    const done = () => { toast(isJson ? "Sicherung gespeichert" : "Tabelle gespeichert"); if (isJson) markBackedUp(); if (S.tab === "stats") renderStats(); };
+    if (downloads) {
+      try { await downloads.save({ filename, data }); done(); }
+      catch (err) { if (err?.code !== "declined") toast("Export nicht möglich"); }
+      return;
+    }
+    // iPhone: Teilen-Menü öffnen („In Dateien sichern“, AirDrop, Mail …)
+    const file = new File([data], filename, { type: isJson ? "application/json" : "text/csv" });
+    if (navigator.canShare?.({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: filename }); done(); }
+      catch (err) { if (err?.name !== "AbortError") toast("Teilen nicht möglich"); }
+      return;
+    }
+    // Computer: normaler Download
+    const url = URL.createObjectURL(file);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    done();
+  }
+
+  // Erinnerung: nur wenn Daten ausschließlich auf dem Gerät liegen
+  function renderBackupHint() {
+    const box = $("backupBox");
+    const deviceOnly = S.mode === "local";
+    const hasData = Object.values(S.days).some(d => !isEmptyDay(d));
+    const last = readNum(BACKUP_KEY), snooze = readNum(SNOOZE_KEY);
+    const due = deviceOnly && hasData && Date.now() > snooze && (!last || Date.now() - last > 30 * 86400000);
+    box.hidden = !due;
+    if (!due) return;
+    const days = last ? Math.floor((Date.now() - last) / 86400000) : null;
+    box.innerHTML = `<strong>Zeit für eine Sicherung</strong>
+      <span>${days === null ? "Du hast noch nie eine Sicherung gespeichert." : `Deine letzte Sicherung ist ${days} Tage her.`} Deine Einträge liegen nur auf diesem Gerät. Speichere die Sicherung z. B. in iCloud Drive, dann bleibt nichts verloren, auch bei einem neuen Handy.</span>
+      <div class="btnrow"><button class="btn" data-act="exportJson">Jetzt sichern</button><button class="btn ghost" data-act="backupLater">In einer Woche erinnern</button></div>`;
+  }
+
+  // Rangliste nur über Migränetage (bei Kopfschmerzen gibt es keine Trigger/Aura)
+  function rankPanel(title, migKeys, field, color, emptyMsg) {
+    const cnt = {};
+    migKeys.forEach(k => S.days[k][field].forEach(t => { cnt[t] = (cnt[t] || 0) + 1; }));
+    const total = migKeys.length;
+    const rows = Object.entries(cnt).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "de")).slice(0, 10);
+    const head = `<h2>${title}</h2><p class="muted small" style="margin:-6px 0 0">Nur Migränetage im gewählten Zeitraum</p>`;
+    if (!rows.length) return `<div class="panel">${head}<p class="muted small" style="margin:0">${total ? emptyMsg : "Im gewählten Zeitraum gab es keine Migräne."}</p></div>`;
+    const max = rows[0][1];
+    return `<div class="panel">${head}<div class="rank">${rows.map(([n, c], i) => `
+      <div class="rank-row" style="--fill:${color}">
+        <span class="pos">${i + 1}.</span><span class="name">${esc(n)}</span><span class="val">${c}×</span>
+        <span class="bar"><i style="width:${(c / max) * 100}%"></i></span>
+        <span class="sub">bei ${c} von ${total} ${total === 1 ? "Migräneattacke" : "Migräneattacken"} (${Math.round((c / total) * 100)} %)</span>
+      </div>`).join("")}</div></div>`;
+  }
+
+  function monthChart(start, end) {
+    const months = [];
+    let d = parseKey(start); d.setDate(1);
+    const e = parseKey(end);
+    while (d <= e) { months.push(`${d.getFullYear()}-${pad(d.getMonth() + 1)}`); d.setMonth(d.getMonth() + 1); }
+    const list = months.slice(-12);
+    const data = list.map(ym => {
+      let m = 0, h = 0;
+      for (const [k, v] of Object.entries(S.days)) if (k.startsWith(ym) && k >= start && k <= end) { if (v.type === "migraine") m++; if (v.type === "headache") h++; }
+      return { ym, m, h };
+    });
+    const max = Math.max(1, ...data.map(x => x.m + x.h));
+    const step = max <= 5 ? 1 : max <= 10 ? 2 : max <= 20 ? 5 : 10;
+    const top = Math.ceil(max / step) * step;
+    const W = 340, H = 170, L = 24, R = 6, T = 10, B = 24;
+    const cw = (W - L - R) / data.length, bw = Math.min(26, cw * 0.62);
+    const y = v => T + (H - T - B) * (1 - v / top);
+    let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Migräne- und Kopfschmerztage pro Monat">`;
+    for (let v = 0; v <= top; v += step) s += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 6}" y="${y(v) + 3.5}" text-anchor="end">${v}</text>`;
+    data.forEach((x, i) => {
+      const cx = L + cw * i + cw / 2, x0 = cx - bw / 2;
+      if (x.m) s += `<rect x="${x0}" y="${y(x.m)}" width="${bw}" height="${y(0) - y(x.m)}" rx="3" fill="var(--mig)"/>`;
+      if (x.h) s += `<rect x="${x0}" y="${y(x.m + x.h)}" width="${bw}" height="${y(x.m) - y(x.m + x.h)}" rx="3" fill="var(--head)"/>`;
+      const [yy, mm] = x.ym.split("-").map(Number);
+      s += `<text x="${cx}" y="${H - 8}" text-anchor="middle">${fmtMonthShort.format(new Date(yy, mm - 1, 1)).replace(".", "")}</text>`;
+    });
+    return s + `</svg>`;
+  }
+
+  // ---------- tabs ----------
+  function renderAll() {
+    ["tag", "cal", "notes", "stats"].forEach(t => { $("v-" + t).hidden = S.tab !== t; });
+    document.querySelectorAll(".tabbar button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === S.tab));
+    if (S.tab === "tag") renderTag();
+    if (S.tab === "cal") renderCal();
+    if (S.tab === "notes") renderNotes();
+    if (S.tab === "stats") renderStats();
+  }
+  function setTab(t) {
+    S.tab = t;
+    try { localStorage.setItem(CACHE_KEY + ":tab", t); } catch (e) {}
+    renderAll();
+    window.scrollTo(0, 0);
+  }
+
+  function csvExport() {
+    const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const rows = [["Datum", "Art", "Stärke", "Medikamente", "Trigger", "Aura-Symptome", "Notiz"]];
+    Object.keys(S.days).sort().forEach(k => {
+      const d = S.days[k]; if (isEmptyDay(d)) return;
+      rows.push([k, d.type ? TYPE_LABEL[d.type] : "", d.intensity || "", d.meds.map(m => (doseOf(d, m) > 1 ? doseOf(d, m) + "x " : "") + m).join(" | "), d.triggers.join(", "), d.symptoms.join(", "), d.note]);
+    });
+    return "\ufeff" + rows.map(r => r.map(q).join(";")).join("\r\n");
+  }
+
+  // ---------- events ----------
+  document.addEventListener("click", async e => {
+    if (suppressClick && e.target.closest(".chip")) { e.preventDefault(); return; }
+    const tabBtn = e.target.closest(".tabbar button");
+    if (tabBtn) { setTab(tabBtn.dataset.tab); return; }
+    const el = e.target.closest("[data-act]");
+    if (!el) return;
+    const act = el.dataset.act, v = el.dataset.v, kk = el.dataset.k, k = S.date;
+    switch (act) {
+      case "setType":
+        if (mutate(k, d => {
+          if (d.type === v) { d.type = null; d.intensity = null; }
+          else { d.type = v; }
+        }) === false) break;
+        toast(getDay(k).type ? TYPE_LABEL[v] + " eingetragen" : "Auswahl aufgehoben");
+        renderTag(); break;
+      case "setInt": mutate(k, d => { d.intensity = d.intensity === +v ? null : +v; }); renderTag(); break;
+      case "tog": mutate(k, d => toggleIn(d[KINDS[kk].field], v)); renderTag(); break;
+      case "doseInc": mutate(k, d => { d.medCounts[v] = Math.min(doseOf(d, v) + 1, MAX_DOSE); }); renderTag(); break;
+      case "doseDec": mutate(k, d => {
+        const n = doseOf(d, v);
+        if (n <= 1) d.meds = d.meds.filter(x => x !== v);
+        else d.medCounts[v] = n - 1;
+      }); renderTag(); break;
+      case "add": S.adding[kk] = true; renderTag(); break;
+      case "cancelAdd": S.adding[kk] = false; renderTag(); break;
+      case "legacyTake":
+        if (!S.legacy || !canChange()) break;
+        S.importPreview = S.legacy;
+        await runImport(false);
+        dropLegacy();
+        break;
+      case "legacyDrop": dropLegacy(); toast("Verworfen"); break;
+      case "backupLater": writeNum(SNOOZE_KEY, Date.now() + 7 * 86400000); renderBackupHint(); break;
+      case "restore": if (!canChange()) break; S[KINDS[kk].hidden] = []; persistSettings(); toast("Standardeinträge sind wieder da"); renderTag(); break;
+      case "prevDay": S.date = addDays(S.date, -1); KIND_KEYS.forEach(x => { S.adding[x] = false; }); renderTag(); break;
+      case "nextDay": if (S.date < todayKey()) { S.date = addDays(S.date, 1); renderTag(); } break;
+      case "goToday": S.date = todayKey(); renderTag(); break;
+      case "prevMonth": case "nextMonth": {
+        const [y, m] = S.calMonth.split("-").map(Number);
+        const d = new Date(y, m - 1 + (act === "nextMonth" ? 1 : -1), 1);
+        S.calMonth = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; renderCal(); break;
+      }
+      case "openDay": S.date = v; resetChipUI(); setTab("tag"); break;
+      case "tab": setTab(v); break;
+      case "range": S.range = v; renderStats(); break;
+      case "exportJson": await giveFile("json"); break;
+      case "exportCsv": await giveFile("csv"); break;
+      case "importPick": { const f = $("importFile"); f.value = ""; f.click(); break; }
+      case "importMerge": runImport(false); break;
+      case "importReplace": S.importConfirm = true; renderStats(); break;
+      case "importBack": S.importConfirm = false; renderStats(); break;
+      case "importReplaceGo": runImport(true); break;
+      case "importCancel": S.importPreview = null; S.importConfirm = false; S.importMsg = ""; renderStats(); break;
+    }
+  });
+
+  document.addEventListener("submit", e => {
+    const f = e.target.closest("form[data-form]");
+    if (!f) return;
+    e.preventDefault();
+    const kind = f.dataset.form;
+    const input = f.querySelector("input");
+    const val = input.value.trim().replace(/\s+/g, " ");
+    if (!val) { input.focus(); return; }
+    if (!canChange()) return;
+    const K = KINDS[kind];
+    const custom = S[K.custom];
+    const existing = [...K.defaults, ...custom].find(x => x.toLowerCase() === val.toLowerCase());
+    const name = existing || val;
+    if (!existing) { custom.push(name); persistSettings(); }
+    else if (S[K.hidden].includes(name)) { S[K.hidden] = S[K.hidden].filter(x => x !== name); persistSettings(); }
+    mutate(S.date, d => { const arr = d[K.field]; if (!arr.includes(name)) arr.push(name); });
+    S.adding[kind] = false;
+    toast(existing ? "„" + name + "“ ausgewählt" : "„" + name + "“ hinzugefügt");
+    renderTag();
+  });
+
+  // ---------- gedrückt halten → in den Papierkorb ziehen ----------
+  const HOLD_MS = 1000;
+  document.documentElement.style.setProperty("--hold", HOLD_MS + "ms");
+  const trash = $("trash");
+  let press = null;
+  let suppressClick = false;
+  let lastTouch = 0;
+
+  function pressStart(chip, x, y) {
+    pressCancel();
+    press = { chip, kind: chip.dataset.k, value: chip.dataset.v, x, y, dragging: false };
+    chip.classList.add("pressing");
+    press.timer = setTimeout(startDrag, HOLD_MS);
+  }
+  function pressCancel() {
+    if (!press) return;
+    clearTimeout(press.timer);
+    press.chip.classList.remove("pressing", "lifted");
+    press.ghost?.remove();
+    trash.classList.remove("show", "hot");
+    press = null;
+  }
+  function startDrag() {
+    const p = press;
+    if (!p || !p.chip.isConnected) { pressCancel(); return; }
+    p.dragging = true;
+    suppressClick = true;
+    p.chip.classList.remove("pressing");
+    p.chip.classList.add("lifted");
+    const r = p.chip.getBoundingClientRect();
+    const g = document.createElement("div");
+    g.className = "chip ghost";
+    g.textContent = p.value;
+    p.offX = p.x - r.left; p.offY = p.y - r.top;
+    document.body.appendChild(g);
+    p.ghost = g;
+    moveGhost(p.x, p.y);
+    trash.classList.add("show");
+    try { navigator.vibrate?.(25); } catch (e) {}
+  }
+  function overTrash(x, y) {
+    const r = trash.getBoundingClientRect(), pad = 28;
+    return x > r.left - pad && x < r.right + pad && y > r.top - pad && y < r.bottom + pad;
+  }
+  function moveGhost(x, y) {
+    press.ghost.style.transform = `translate(${x - press.offX}px, ${y - press.offY}px) scale(1.06)`;
+    trash.classList.toggle("hot", overTrash(x, y));
+  }
+  // true, solange gezogen wird (dann darf die Seite nicht scrollen)
+  function pressMove(x, y) {
+    if (!press) return false;
+    if (!press.dragging) {
+      if (Math.hypot(x - press.x, y - press.y) > 10) pressCancel();
+      return false;
+    }
+    moveGhost(x, y);
+    return true;
+  }
+  function pressEnd(x, y) {
+    if (!press) return;
+    const { dragging, kind, value } = press;
+    const drop = dragging && overTrash(x, y);
+    pressCancel();
+    if (drop) deleteItem(kind, value);
+    if (dragging) setTimeout(() => { suppressClick = false; }, 400);
+  }
+  const holdChip = t => t.closest?.('.chip[data-act="tog"]');
+
+  document.addEventListener("touchstart", e => {
+    lastTouch = Date.now();
+    const chip = holdChip(e.target);
+    if (!chip || e.touches.length > 1) { pressCancel(); return; }
+    pressStart(chip, e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+  document.addEventListener("touchmove", e => {
+    if (!press) return;
+    const t = e.touches[0];
+    if (pressMove(t.clientX, t.clientY)) e.preventDefault();
+  }, { passive: false });
+  document.addEventListener("touchend", e => {
+    lastTouch = Date.now();
+    if (!press) return;
+    if (press.dragging) e.preventDefault();
+    const t = e.changedTouches[0];
+    pressEnd(t.clientX, t.clientY);
+  }, { passive: false });
+  document.addEventListener("touchcancel", () => pressCancel());
+
+  // Maus (Laptop): gleiche Geste mit gedrückter Maustaste
+  document.addEventListener("mousedown", e => {
+    if (e.button !== 0 || Date.now() - lastTouch < 800) return;
+    const chip = holdChip(e.target);
+    if (chip) pressStart(chip, e.clientX, e.clientY);
+  });
+  document.addEventListener("mousemove", e => { if (press && Date.now() - lastTouch > 800) pressMove(e.clientX, e.clientY); });
+  document.addEventListener("mouseup", e => { if (Date.now() - lastTouch > 800) pressEnd(e.clientX, e.clientY); });
+  document.addEventListener("contextmenu", e => { if (holdChip(e.target)) e.preventDefault(); });
+
+  $("note").addEventListener("input", e => {
+    const val = e.target.value;
+    mutate(S.date, d => { d.note = val; }, 700);
+    $("saveHint").textContent = "Wird gespeichert …";
+    clearTimeout(timers.hint);
+    timers.hint = setTimeout(() => { $("saveHint").textContent = "Gespeichert"; }, 900);
+  });
+  $("note").addEventListener("blur", () => renderTag());
+
+  $("importFile").addEventListener("change", async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    S.importMsg = ""; S.importErr = false; S.importConfirm = false;
+    try {
+      if (file.size > 5 * 1024 * 1024) throw new Error("Die Datei ist zu groß (max. 5 MB).");
+      S.importPreview = parseImport(await file.text(), file.name);
+    } catch (err) {
+      S.importPreview = null;
+      S.importMsg = err.message || "Die Datei konnte nicht gelesen werden.";
+      S.importErr = true;
+    }
+    renderStats();
+    $("dataPanel")?.scrollIntoView({ block: "center", behavior: "smooth" });
+  });
+
+  $("noteSearch").addEventListener("input", e => { S.query = e.target.value; renderNotes(); });
+
+  // Datum wechseln, wenn die App über Mitternacht offen bleibt
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && S.tab === "tag") renderTag();
+  });
+
+  // ---------- start ----------
+  loadPrefs();
+  setMode("loading");
+  renderAll();
+  connect();
+})();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+</script>
+</body>
+</html>
