@@ -37,10 +37,10 @@
 }
 * { box-sizing: border-box; }
 html { background: var(--bg); padding-top: env(safe-area-inset-top, 0px); }
-body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.45 var(--font-body); -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.45 var(--font-body); -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 [hidden] { display: none !important; }
 button, input, textarea { font: inherit; color: inherit; }
-button { cursor: pointer; }
+button { cursor: pointer; touch-action: manipulation; }
 :focus-visible { outline: 2px solid var(--mig); outline-offset: 2px; }
 
 .app { max-width: 560px; margin: 0 auto; padding-inline: 16px; padding-block: 14px calc(var(--tabbar-h) + 28px + env(safe-area-inset-bottom, 0px)); }
@@ -154,8 +154,8 @@ textarea#note { width: 100%; min-height: 120px; border: 1px solid var(--line); b
 .minichips .med { background: var(--fg); color: var(--bg); }
 mark { background: var(--head-soft); color: inherit; border-radius: 3px; }
 
-/* Statistik */
-.seg { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--chip); border-radius: 12px; padding: 3px; gap: 3px; }
+/* Statistik & Einstellungen */
+.seg { display: grid; grid-auto-columns: 1fr; grid-auto-flow: column; background: var(--chip); border-radius: 12px; padding: 3px; gap: 3px; }
 .seg button { border: 0; background: transparent; border-radius: 9px; padding: 7px 0; font-size: 0.85rem; font-weight: 600; color: var(--muted); }
 .seg button[aria-pressed="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 3px rgba(0, 0, 0, .12); }
 .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -196,9 +196,10 @@ mark { background: var(--head-soft); color: inherit; border-radius: 3px; }
 
 /* Tab-Leiste & Meldungen */
 .tabbar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); z-index: 10; }
-.tabbar nav { max-width: 560px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); height: var(--tabbar-h); }
-.tabbar button { border: 0; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 0.7rem; font-weight: 600; color: var(--muted); }
-.tabbar svg { width: 24px; height: 24px; }
+.tabbar nav { max-width: 560px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); height: var(--tabbar-h); }
+.tabbar button { border: 0; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-width: 0; padding: 0 2px; font-size: 0.64rem; font-weight: 600; color: var(--muted); }
+.tabbar button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tabbar svg { width: 24px; height: 24px; flex: none; }
 .tabbar button[aria-selected="true"] { color: var(--mig); }
 .toast { position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + 16px + env(safe-area-inset-bottom, 0px)); width: max-content; max-width: calc(100vw - 32px); transform: translateX(-50%) translateY(10px); background: var(--fg); color: var(--bg); padding: 9px 16px; border-radius: 18px; font-size: 0.85rem; font-weight: 600; text-align: center; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 20; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -212,106 +213,114 @@ mark { background: var(--head-soft); color: inherit; border-radius: 3px; }
   <!-- TAG -->
   <section class="view" id="v-tag">
     <div class="dayhead">
-      <button class="iconbtn" data-act="prevDay" aria-label="Vorheriger Tag">‹</button>
+      <button class="iconbtn" data-act="prevDay" data-i18n-aria="prevDay">‹</button>
       <div class="center">
-        <div class="eyebrow" id="dayEyebrow">Heute</div>
+        <div class="eyebrow" id="dayEyebrow"></div>
         <h1 id="dayTitle"></h1>
-        <button class="todaylink" data-act="goToday" id="todayLink" hidden>Zurück zu heute</button>
+        <button class="todaylink" data-act="goToday" id="todayLink" data-i18n="backToday" hidden></button>
       </div>
-      <button class="iconbtn" data-act="nextDay" id="nextDayBtn" aria-label="Nächster Tag">›</button>
+      <button class="iconbtn" data-act="nextDay" id="nextDayBtn" data-i18n-aria="nextDay">›</button>
     </div>
 
     <div class="choice">
       <button class="bigbtn mig" data-act="setType" data-v="migraine" id="btnMig" aria-pressed="false">
         <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 4 11 22h9l-3 14 12-19h-9z"/></svg>
-        Migräne
-        <small id="migSub">heute</small>
+        <span data-i18n="migraine"></span>
+        <small id="migSub"></small>
       </button>
       <button class="bigbtn head" data-act="setType" data-v="headache" id="btnHead" aria-pressed="false">
         <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="20" cy="22" r="11"/><path d="M9 9l4 4M31 9l-4 4M20 4v5"/></svg>
-        Kopfschmerzen
-        <small id="headSub">heute</small>
+        <span data-i18n="headache"></span>
+        <small id="headSub"></small>
       </button>
     </div>
     <p class="hint" id="typeHint"></p>
 
     <div class="intensity" id="intensityWrap" hidden>
-      <div class="eyebrow">Stärke (1 = leicht, 10 = unerträglich)</div>
+      <div class="eyebrow" data-i18n="intensity"></div>
       <div class="scale" id="scale"></div>
     </div>
 
     <details class="sec" open>
-      <summary><h2>Schmerzmittel &amp; Medikamente</h2><span class="count num" id="cntM" hidden></span><span class="chev">▾</span></summary>
+      <summary><h2 data-i18n="secM"></h2><span class="count num" id="cntM" hidden></span><span class="chev">▾</span></summary>
       <div class="sec-tools" id="toolsM"></div>
       <div class="chips" id="chipsM"></div>
       <div class="doses" id="doses"></div>
     </details>
 
     <details class="sec" open>
-      <summary><h2>Mögliche Trigger</h2><span class="count num" id="cntT" hidden></span><span class="chev">▾</span></summary>
+      <summary><h2 data-i18n="secT"></h2><span class="count num" id="cntT" hidden></span><span class="chev">▾</span></summary>
       <div class="sec-tools" id="toolsT"></div>
       <div class="chips" id="chipsT"></div>
     </details>
 
     <details class="sec" open>
-      <summary><h2>Aura &amp; Vorboten</h2><span class="count num" id="cntS" hidden></span><span class="chev">▾</span></summary>
+      <summary><h2 data-i18n="secS"></h2><span class="count num" id="cntS" hidden></span><span class="chev">▾</span></summary>
       <div class="sec-tools" id="toolsS"></div>
       <div class="chips" id="chipsS"></div>
     </details>
 
     <details class="sec" open>
-      <summary><h2>Notiz</h2><span class="chev">▾</span></summary>
-      <textarea id="note" placeholder="Wie war der Tag? Dauer, Uhrzeit, ob das Mittel geholfen hat …" aria-label="Notiz"></textarea>
+      <summary><h2 data-i18n="secN"></h2><span class="chev">▾</span></summary>
+      <textarea id="note" data-i18n-ph="notePh" data-i18n-aria="secN"></textarea>
       <div class="savehint" id="saveHint"></div>
     </details>
 
     <div class="callout" id="backupBox" hidden></div>
-    <p class="status"><i></i>Gespeichert auf diesem Gerät · funktioniert auch offline</p>
+    <p class="status"><i></i><span data-i18n="status"></span></p>
   </section>
 
   <!-- KALENDER -->
   <section class="view" id="v-cal" hidden>
     <div class="calnav">
-      <button class="iconbtn" data-act="prevMonth" aria-label="Vorheriger Monat">‹</button>
+      <button class="iconbtn" data-act="prevMonth" data-i18n-aria="prevMonth">‹</button>
       <div><div class="eyebrow" id="calYear"></div><h2 id="calTitle"></h2></div>
-      <button class="iconbtn" data-act="nextMonth" aria-label="Nächster Monat">›</button>
+      <button class="iconbtn" data-act="nextMonth" data-i18n-aria="nextMonth">›</button>
     </div>
     <div class="cal" id="cal"></div>
-    <div class="legend"><span><i class="sw mig"></i>Migräne</span><span><i class="sw head"></i>Kopfschmerzen</span><span><i class="sw dot"></i>Trigger/Notiz erfasst</span></div>
+    <div class="legend"><span><i class="sw mig"></i><span data-i18n="migraine"></span></span><span><i class="sw head"></i><span data-i18n="headache"></span></span><span><i class="sw dot"></i><span data-i18n="legendExtra"></span></span></div>
     <div class="tiles" id="monthSum"></div>
-    <p class="muted small" style="margin:0">Tippe auf einen Tag, um ihn anzusehen oder nachzutragen.</p>
+    <p class="muted small" style="margin:0" data-i18n="calHint"></p>
   </section>
 
   <!-- NOTIZEN -->
   <section class="view" id="v-notes" hidden>
-    <h1>Notizen</h1>
-    <input class="search" id="noteSearch" type="search" placeholder="Notizen durchsuchen …" autocomplete="off" aria-label="Notizen durchsuchen">
+    <h1 data-i18n="tabNotes"></h1>
+    <input class="search" id="noteSearch" type="search" autocomplete="off" data-i18n-ph="searchPh" data-i18n-aria="searchPh">
     <div id="notesList" class="view"></div>
   </section>
 
   <!-- STATISTIK -->
   <section class="view" id="v-stats" hidden>
-    <h1>Statistik</h1>
-    <div class="seg" id="rangeSeg" role="group" aria-label="Zeitraum"></div>
+    <h1 data-i18n="tabStats"></h1>
+    <div class="seg" id="rangeSeg" role="group" data-i18n-aria="range"></div>
     <div id="statsBody" class="view"></div>
+  </section>
+
+  <!-- EINSTELLUNGEN -->
+  <section class="view" id="v-set" hidden>
+    <h1 data-i18n="tabSet"></h1>
+    <div id="setBody" class="view"></div>
   </section>
 </div>
 
 <div class="tabbar">
   <nav role="tablist">
     <button role="tab" data-act="tab" data-v="tag" aria-selected="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Tag</button>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span data-i18n="tabDay"></span></button>
     <button role="tab" data-act="tab" data-v="cal" aria-selected="false">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Kalender</button>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span data-i18n="tabCal"></span></button>
     <button role="tab" data-act="tab" data-v="notes" aria-selected="false">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h7M9 7h4"/></svg>Notizen</button>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h7M9 7h4"/></svg><span data-i18n="tabNotes"></span></button>
     <button role="tab" data-act="tab" data-v="stats" aria-selected="false">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Statistik</button>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span data-i18n="tabStats"></span></button>
+    <button role="tab" data-act="tab" data-v="set" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span data-i18n="tabSet"></span></button>
   </nav>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="trash" id="trash" aria-hidden="true">
-  <span>Hierher ziehen zum Löschen</span>
+  <span data-i18n="trash"></span>
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>
 </div>
 <input type="file" id="importFile" accept=".json,.csv,.txt,application/json,text/csv,text/plain" hidden>
@@ -321,6 +330,8 @@ mark { background: var(--head-soft); color: inherit; border-radius: 3px; }
 "use strict";
 
 // ---------- Auswahllisten ----------
+// Gespeichert wird immer der deutsche Name (so bleiben alte Daten und Sicherungen gültig);
+// angezeigt wird er in der gewählten Sprache.
 const DEFAULT_TRIGGERS = [
   "Schlafrhythmus", "Stress", "Zu wenig gegessen", "Kein Frühstück", "Alkohol",
   "Zu wenig getrunken", "Wetterumschwung", "Periode / Hormone", "Viel Bildschirmzeit",
@@ -333,17 +344,30 @@ const DEFAULT_SYMPTOMS = [
   "Schwindel", "Übelkeit", "Leichter Kopfschmerz", "Nackenschmerzen", "Viel Gähnen", "Müdigkeit"
 ];
 const DEFAULT_MEDS = ["Ibuprofen 400 mg", "Zolmitriptan 2,5 mg"];
+const NAMES_EN = new Map(Object.entries({
+  "Schlafrhythmus": "Sleep rhythm", "Stress": "Stress", "Zu wenig gegessen": "Not enough food",
+  "Kein Frühstück": "No breakfast", "Alkohol": "Alcohol", "Zu wenig getrunken": "Not enough water",
+  "Wetterumschwung": "Weather change", "Periode / Hormone": "Period / hormones", "Viel Bildschirmzeit": "Lots of screen time",
+  "Grelles Licht": "Bright light", "Lärm": "Noise", "Starke Gerüche": "Strong smells", "Zu viel Koffein": "Too much caffeine",
+  "Koffeinentzug": "Caffeine withdrawal", "Schokolade": "Chocolate", "Gereifter Käse": "Aged cheese", "Rotwein": "Red wine",
+  "Entspannung nach Stress": "Relaxing after stress", "Sport / Anstrengung": "Exercise / exertion", "Reisen": "Travel",
+  "Verspannter Nacken": "Tense neck", "Zu viel geschlafen": "Overslept",
+  "Sehstörungen": "Visual disturbances", "Wortfindungsstörungen": "Trouble finding words", "Hitzeempfinden": "Feeling hot",
+  "Konzentrationsprobleme": "Trouble concentrating", "Schwindel": "Dizziness", "Übelkeit": "Nausea",
+  "Leichter Kopfschmerz": "Mild headache", "Nackenschmerzen": "Neck pain", "Viel Gähnen": "Frequent yawning", "Müdigkeit": "Fatigue",
+  "Zolmitriptan 2,5 mg": "Zolmitriptan 2.5 mg"
+}));
+// englischer Name → gespeicherter deutscher Name (für den Import englischer Tabellen)
+const NAMES_DE = new Map([...NAMES_EN].map(([de, en]) => [en.toLowerCase(), de]));
 const KINDS = {
-  M: { field: "meds", custom: "customMeds", hidden: "hiddenMeds", defaults: DEFAULT_MEDS, addLabel: "Anderes Medikament", ph: "z. B. Paracetamol 500 mg" },
-  T: { field: "triggers", custom: "customTriggers", hidden: "hiddenTriggers", defaults: DEFAULT_TRIGGERS, addLabel: "Eigener Trigger", ph: "Neuer Trigger" },
-  S: { field: "symptoms", custom: "customSymptoms", hidden: "hiddenSymptoms", defaults: DEFAULT_SYMPTOMS, addLabel: "Eigenes Symptom", ph: "Neues Symptom" }
+  M: { field: "meds", custom: "customMeds", hidden: "hiddenMeds", defaults: DEFAULT_MEDS },
+  T: { field: "triggers", custom: "customTriggers", hidden: "hiddenTriggers", defaults: DEFAULT_TRIGGERS },
+  S: { field: "symptoms", custom: "customSymptoms", hidden: "hiddenSymptoms", defaults: DEFAULT_SYMPTOMS }
 };
 const KIND_KEYS = Object.keys(KINDS);
 // eigene Einträge + gelöschte Standardeinträge; beides gehört zur Sicherung
 const LIST_KEYS = KIND_KEYS.flatMap(k => [KINDS[k].custom, KINDS[k].hidden]);
-const TYPE_LABEL = { migraine: "Migräne", headache: "Kopfschmerzen" };
-const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
-const RANGES = [["30", "30 Tage"], ["90", "3 Monate"], ["365", "12 Monate"], ["all", "Gesamt"]];
+const RANGES = ["30", "90", "365", "all"];
 const MAX_DOSE = 20;
 const HOLD_MS = 1000; // passt zur CSS-Animation .chip.pressing
 const DAY_MS = 86400000;
@@ -352,6 +376,161 @@ const DAY_MS = 86400000;
 const DATA_KEY = "migraene-tagebuch-v1:local";
 const BACKUP_KEY = "migraene-tagebuch-v1:lastBackup";
 const SNOOZE_KEY = "migraene-tagebuch-v1:backupSnooze";
+const LANG_KEY = "migraene-tagebuch-v1:lang";
+
+// ---------- Texte ----------
+const TEXT = {
+  de: {
+    locale: "de-DE", appTitle: "Migräne-Tagebuch", file: "migraene-tagebuch",
+    prevDay: "Vorheriger Tag", nextDay: "Nächster Tag", today: "Heute", yesterday: "Gestern", backToday: "Zurück zu heute",
+    migraine: "Migräne", headache: "Kopfschmerzen",
+    subToday: "heute", subPast: "an diesem Tag", subLogged: "eingetragen ✓",
+    hintSel: "Nochmals tippen hebt die Auswahl auf.", hintToday: "Tippe an, was heute zutrifft.", hintPast: "Tippe an, was an diesem Tag zutraf.",
+    intensity: "Stärke (1 = leicht, 10 = unerträglich)",
+    secM: "Schmerzmittel & Medikamente", secT: "Mögliche Trigger", secS: "Aura & Vorboten", secN: "Notiz",
+    notePh: "Wie war der Tag? Dauer, Uhrzeit, ob das Mittel geholfen hat …", noteSaved: "Gespeichert ✓",
+    delHint: "Zum Löschen gedrückt halten und in den Papierkorb ziehen",
+    restore: n => `Gelöschte Standardeinträge zurückholen (${n})`,
+    addM: "Anderes Medikament", addT: "Eigener Trigger", addS: "Eigenes Symptom",
+    phM: "z. B. Paracetamol 500 mg", phT: "Neuer Trigger", phS: "Neues Symptom",
+    add: "Hinzufügen", cancel: "Abbrechen",
+    doseLess: "Eine weniger", doseMore: "Eine mehr", doseDel: v => `${v} entfernen`,
+    status: "Gespeichert auf diesem Gerät · funktioniert auch offline", trash: "Hierher ziehen zum Löschen",
+    deleted: v => `„${v}“ gelöscht`, undo: "Rückgängig", isBack: v => `„${v}“ ist wieder da`,
+    typeSet: v => `${v} eingetragen`, typeCleared: "Auswahl aufgehoben",
+    added: v => `„${v}“ hinzugefügt`, picked: v => `„${v}“ ausgewählt`, defaultsBack: "Standardeinträge sind wieder da",
+    saveFailed: "Speichern fehlgeschlagen. Bitte gleich eine Sicherung exportieren.",
+    tabDay: "Tag", tabCal: "Kalender", tabNotes: "Notizen", tabStats: "Statistik", tabSet: "Einstellungen",
+    prevMonth: "Vorheriger Monat", nextMonth: "Nächster Monat", legendExtra: "Trigger/Notiz erfasst",
+    calHint: "Tippe auf einen Tag, um ihn anzusehen oder nachzutragen.",
+    migIn: m => `Migränetage im ${m}`, headIn: m => `Kopfschmerztage im ${m}`,
+    weekdays: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
+    searchPh: "Notizen durchsuchen …", noHitsT: "Keine Treffer", noHits: q => `Keine Notiz enthält „${q}“.`,
+    noNotesT: "Noch keine Notizen", noNotes: "Schreib im Tab „Tag“ unter „Notiz“ etwas auf. Alle Notizen sammeln sich dann hier, nach Monaten sortiert.",
+    writeNote: "Notiz schreiben", nNotes: n => n === 1 ? "1 Notiz" : `${n} Notizen`,
+    range: "Zeitraum", r30: "30 Tage", r90: "3 Monate", r365: "12 Monate", rall: "Gesamt",
+    noDataT: "Noch keine Daten", noData: "Sobald du Migräne- oder Kopfschmerztage einträgst, siehst du hier, wie oft sie vorkommen und welche Trigger und Symptome am häufigsten sind.",
+    firstDay: "Ersten Tag eintragen",
+    migDays: "Migränetage", headDays: "Kopfschmerztage", migPM: "Migränetage pro Monat (Ø)", headPM: "Kopfschmerztage pro Monat (Ø)",
+    sinceNone: "Noch keine Migräne erfasst", since: n => n === 1 ? "Tag seit letzter Migräne" : "Tage seit letzter Migräne",
+    avgInt: "Ø Stärke (von 10)", perMonth: "Verlauf pro Monat", last12: " (letzte 12)", chartAria: "Migräne- und Kopfschmerztage pro Monat",
+    topT: "Häufigste Trigger", topS: "Häufigste Aura-Symptome", onlyMig: "Nur Migränetage im gewählten Zeitraum",
+    noT: "Noch keine Trigger an Migränetagen erfasst. Wähle im Tab „Tag“ aus, was der Migräne vorausging.",
+    noS: "Noch keine Aura-Symptome an Migränetagen erfasst.", noMig: "Im gewählten Zeitraum gab es keine Migräne.",
+    inAttacks: (c, n, p) => `bei ${c} von ${n} ${n === 1 ? "Migräneattacke" : "Migräneattacken"} (${p} %)`,
+    noMeds: "Im gewählten Zeitraum keine Medikamente erfasst.",
+    medDays: "Tage mit Medikamenten", medPM: "Tage pro Monat (Ø)", doses: "Einnahmen insgesamt", dosesPD: "Einnahmen pro Medikamententag (Ø)",
+    overuse: "Im Schnitt an 10 oder mehr Tagen pro Monat Schmerzmittel. Das solltest du mit deiner Ärztin oder deinem Arzt besprechen.",
+    nDays: n => n === 1 ? "1 Tag" : `${n} Tage`,
+    medSub: (d, m, h) => `${d} ${d === 1 ? "Einnahme" : "Einnahmen"} · an ${m} Migräne- und ${h} Kopfschmerztagen`,
+    wdMig: "Migräne nach Wochentag", wdHead: "Kopfschmerzen nach Wochentag",
+    noWdMig: "Keine Migräneattacken im gewählten Zeitraum.", noWdHead: "Keine Kopfschmerztage im gewählten Zeitraum.",
+    language: "Sprache",
+    installT: "App installieren", installBtn: "Zum Startbildschirm hinzufügen", installed: "Die App ist installiert ✓",
+    installIos: "In Safari unten auf das Teilen-Symbol tippen und „Zum Home-Bildschirm“ wählen.",
+    installOther: "Im Browser-Menü (⋮) „App installieren“ oder „Zum Startbildschirm hinzufügen“ wählen.",
+    aboutT: "Über die App", about: "Deine Einträge bleiben auf diesem Gerät. Es gibt kein Konto und keine Verbindung zu anderen Diensten. Sichere sie deshalb regelmäßig.",
+    dataT: "Daten exportieren & importieren",
+    dataInfo: "Die <b>Sicherung</b> enthält alles: alle Tage und deine Einstellungen, also eigene Medikamente, Trigger und Symptome sowie gelöschte Standardeinträge. Beim Import wird beides wiederhergestellt. Die <b>Tabelle</b> (CSV) öffnet sich in Excel, Numbers oder Google Sheets, praktisch für den Arzttermin.",
+    exportH: "Exportieren", importH: "Importieren", saveBackup: "Sicherung speichern", csvBtn: "Tabelle (CSV)",
+    noBackup: "Noch keine Sicherung gespeichert.",
+    lastBackup: d => `Letzte Sicherung: ${d === 0 ? "heute" : d === 1 ? "gestern" : `vor ${d} Tagen`}`,
+    pickFile: "Datei auswählen …", importInfo: "Sicherungsdatei (.json) oder Tabelle (.csv) aus dieser App. Vor dem Import siehst du, was übernommen wird.",
+    impSummary: (n, a, b, m, h) => `${n === 1 ? "1 Tag" : `${n} Tage`} mit Einträgen (${a} bis ${b}): ${m} × Migräne, ${h} × Kopfschmerzen.`,
+    impOverlap: n => ` ${n} davon gibt es schon in der App.`,
+    impCustom: n => ` Dazu ${n === 1 ? "1 eigener Eintrag" : `${n} eigene Einträge`} (Medikamente, Trigger, Symptome).`,
+    replaceWarn: n => `Alle ${n} bisherigen Einträge werden gelöscht und durch die Datei ersetzt. Das lässt sich nicht rückgängig machen.`,
+    replaceGo: "Ja, alles ersetzen", back: "Zurück", merge: "Zusammenführen",
+    mergeInfo: "Neue Tage kommen dazu. Tage, die es schon gibt, werden mit der Datei überschrieben.",
+    replace: "Alles ersetzen", replaceInfo: "Löscht deine bisherigen Einträge und übernimmt nur die Datei.",
+    imported: n => `${n === 1 ? "1 Tag" : `${n} Tage`} importiert.`, importDone: "Import abgeschlossen",
+    errJson: "Die Datei ist keine gültige Sicherung.", errRows: "In der Tabelle wurden keine Einträge gefunden.",
+    errDate: "Die Tabelle braucht eine Spalte „Datum“.", errEmpty: "In der Datei wurden keine Tage mit Einträgen gefunden.",
+    errSize: "Die Datei ist zu groß (max. 5 MB).", errRead: "Die Datei konnte nicht gelesen werden.",
+    backupSaved: "Sicherung gespeichert", csvSaved: "Tabelle gespeichert", shareFailed: "Teilen nicht möglich",
+    backupT: "Zeit für eine Sicherung", backupNever: "Du hast noch keine Sicherung gespeichert.", backupAgo: d => `Deine letzte Sicherung ist ${d} Tage her.`,
+    backupWhy: "Deine Einträge liegen nur auf diesem Gerät. Speichere die Sicherung z. B. in iCloud Drive oder Google Drive, dann bleibt nichts verloren, auch bei einem neuen Handy.",
+    backupNow: "Jetzt sichern", backupLater: "In einer Woche erinnern",
+    csvHead: ["Datum", "Art", "Stärke", "Medikamente", "Trigger", "Aura-Symptome", "Notiz"]
+  },
+  en: {
+    locale: "en-GB", appTitle: "Migraine Diary", file: "migraine-diary",
+    prevDay: "Previous day", nextDay: "Next day", today: "Today", yesterday: "Yesterday", backToday: "Back to today",
+    migraine: "Migraine", headache: "Headache",
+    subToday: "today", subPast: "on this day", subLogged: "logged ✓",
+    hintSel: "Tap again to undo.", hintToday: "Tap what applies today.", hintPast: "Tap what applied on this day.",
+    intensity: "Intensity (1 = mild, 10 = unbearable)",
+    secM: "Painkillers & medication", secT: "Possible triggers", secS: "Aura & warning signs", secN: "Note",
+    notePh: "How was the day? Duration, time, whether the medication helped …", noteSaved: "Saved ✓",
+    delHint: "To delete, press and hold, then drag to the bin",
+    restore: n => `Bring back deleted default entries (${n})`,
+    addM: "Other medication", addT: "Own trigger", addS: "Own symptom",
+    phM: "e.g. Paracetamol 500 mg", phT: "New trigger", phS: "New symptom",
+    add: "Add", cancel: "Cancel",
+    doseLess: "One less", doseMore: "One more", doseDel: v => `Remove ${v}`,
+    status: "Saved on this device · works offline", trash: "Drag here to delete",
+    deleted: v => `“${v}” deleted`, undo: "Undo", isBack: v => `“${v}” is back`,
+    typeSet: v => `${v} logged`, typeCleared: "Selection cleared",
+    added: v => `“${v}” added`, picked: v => `“${v}” selected`, defaultsBack: "Default entries are back",
+    saveFailed: "Saving failed. Please export a backup right away.",
+    tabDay: "Day", tabCal: "Calendar", tabNotes: "Notes", tabStats: "Stats", tabSet: "Settings",
+    prevMonth: "Previous month", nextMonth: "Next month", legendExtra: "Trigger/note logged",
+    calHint: "Tap a day to view it or fill it in later.",
+    migIn: m => `Migraine days in ${m}`, headIn: m => `Headache days in ${m}`,
+    weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    searchPh: "Search notes …", noHitsT: "No matches", noHits: q => `No note contains “${q}”.`,
+    noNotesT: "No notes yet", noNotes: "Write something under “Note” in the “Day” tab. All your notes will be collected here, sorted by month.",
+    writeNote: "Write a note", nNotes: n => n === 1 ? "1 note" : `${n} notes`,
+    range: "Time range", r30: "30 days", r90: "3 months", r365: "12 months", rall: "All",
+    noDataT: "No data yet", noData: "Once you log migraine or headache days, you'll see how often they happen and which triggers and symptoms come up most.",
+    firstDay: "Log your first day",
+    migDays: "Migraine days", headDays: "Headache days", migPM: "Migraine days per month (avg)", headPM: "Headache days per month (avg)",
+    sinceNone: "No migraine logged yet", since: n => n === 1 ? "day since last migraine" : "days since last migraine",
+    avgInt: "Avg. intensity (of 10)", perMonth: "Per month", last12: " (last 12)", chartAria: "Migraine and headache days per month",
+    topT: "Most common triggers", topS: "Most common aura symptoms", onlyMig: "Migraine days in the selected period only",
+    noT: "No triggers logged on migraine days yet. In the “Day” tab, pick what came before the migraine.",
+    noS: "No aura symptoms logged on migraine days yet.", noMig: "No migraine in the selected period.",
+    inAttacks: (c, n, p) => `in ${c} of ${n} migraine ${n === 1 ? "attack" : "attacks"} (${p}%)`,
+    noMeds: "No medication logged in the selected period.",
+    medDays: "Days with medication", medPM: "Days per month (avg)", doses: "Doses in total", dosesPD: "Doses per medication day (avg)",
+    overuse: "On average you took painkillers on 10 or more days a month. It's worth talking to your doctor about this.",
+    nDays: n => n === 1 ? "1 day" : `${n} days`,
+    medSub: (d, m, h) => `${d} ${d === 1 ? "dose" : "doses"} · on ${m} migraine and ${h} headache days`,
+    wdMig: "Migraine by weekday", wdHead: "Headache by weekday",
+    noWdMig: "No migraine attacks in the selected period.", noWdHead: "No headache days in the selected period.",
+    language: "Language",
+    installT: "Install app", installBtn: "Add to home screen", installed: "The app is installed ✓",
+    installIos: "In Safari, tap the Share icon at the bottom and choose “Add to Home Screen”.",
+    installOther: "In the browser menu (⋮), choose “Install app” or “Add to home screen”.",
+    aboutT: "About", about: "Your entries stay on this device. There's no account and no connection to other services, so back them up regularly.",
+    dataT: "Export & import data",
+    dataInfo: "The <b>backup</b> contains everything: all days plus your settings, i.e. your own medications, triggers and symptoms and any deleted default entries. Importing restores both. The <b>spreadsheet</b> (CSV) opens in Excel, Numbers or Google Sheets, handy for doctor's appointments.",
+    exportH: "Export", importH: "Import", saveBackup: "Save backup", csvBtn: "Spreadsheet (CSV)",
+    noBackup: "No backup saved yet.",
+    lastBackup: d => `Last backup: ${d === 0 ? "today" : d === 1 ? "yesterday" : `${d} days ago`}`,
+    pickFile: "Choose file …", importInfo: "A backup (.json) or spreadsheet (.csv) from this app. You'll see what will be imported first.",
+    impSummary: (n, a, b, m, h) => `${n === 1 ? "1 day" : `${n} days`} with entries (${a} to ${b}): ${m} × migraine, ${h} × headache.`,
+    impOverlap: n => ` ${n} of them already exist in the app.`,
+    impCustom: n => ` Plus ${n === 1 ? "1 custom entry" : `${n} custom entries`} (medication, triggers, symptoms).`,
+    replaceWarn: n => `All ${n} existing entries will be deleted and replaced by the file. This can't be undone.`,
+    replaceGo: "Yes, replace everything", back: "Back", merge: "Merge",
+    mergeInfo: "New days are added. Days that already exist are overwritten by the file.",
+    replace: "Replace everything", replaceInfo: "Deletes your existing entries and keeps only the file.",
+    imported: n => `${n === 1 ? "1 day" : `${n} days`} imported.`, importDone: "Import complete",
+    errJson: "This file isn't a valid backup.", errRows: "No entries found in the spreadsheet.",
+    errDate: "The spreadsheet needs a “Date” column.", errEmpty: "No days with entries found in the file.",
+    errSize: "The file is too large (max. 5 MB).", errRead: "The file couldn't be read.",
+    backupSaved: "Backup saved", csvSaved: "Spreadsheet saved", shareFailed: "Sharing isn't possible",
+    backupT: "Time for a backup", backupNever: "You haven't saved a backup yet.", backupAgo: d => `Your last backup was ${d} days ago.`,
+    backupWhy: "Your entries only live on this device. Save the backup to iCloud Drive or Google Drive, for example, so nothing gets lost, even with a new phone.",
+    backupNow: "Back up now", backupLater: "Remind me in a week",
+    csvHead: ["Date", "Type", "Intensity", "Medication", "Triggers", "Aura symptoms", "Note"]
+  }
+};
+let lang = "de", L = TEXT.de;
+const tr = (key, ...a) => typeof L[key] === "function" ? L[key](...a) : L[key];
+const nameOf = v => lang === "en" ? NAMES_EN.get(v) ?? v : v;            // Anzeige-Name eines Eintrags
+const canonical = v => NAMES_DE.get(String(v).toLowerCase()) ?? v;        // englischer Name → gespeicherter Name
 
 // ---------- Hilfsfunktionen ----------
 const $ = id => document.getElementById(id);
@@ -363,19 +542,32 @@ const todayKey = () => keyOf(new Date());
 const addDays = (k, n) => { const d = parseKey(k); d.setDate(d.getDate() + n); return keyOf(d); };
 const daysBetween = (a, b) => Math.round((parseKey(b) - parseKey(a)) / DAY_MS);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const dateFmt = opts => new Intl.DateTimeFormat("de-DE", opts);
-const fmtLong = dateFmt({ weekday: "long", day: "numeric", month: "long" });
-const fmtMonth = dateFmt({ month: "long" });
-const fmtMonthShort = dateFmt({ month: "short" });
-const fmtShort = dateFmt({ weekday: "short", day: "numeric", month: "long" });
-const f1 = n => n.toLocaleString("de-DE", { maximumFractionDigits: 1 });
-const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+let fmtLong, fmtMonth, fmtMonthShort, fmtShort, fmtNum, fmtDate;
+const f1 = n => fmtNum.format(n);
 const counter = () => Object.create(null); // Zählobjekt ohne geerbte Schlüssel
 const inc = (map, key, by = 1) => { map[key] = (map[key] || 0) + by; };
 const union = (a, b) => [...a, ...b.filter(x => !a.includes(x))];
 const strList = v => Array.isArray(v) ? [...new Set(v.filter(x => typeof x === "string" && x.trim()))] : [];
-const sortByCount = map => Object.entries(map).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "de"));
+const sortByCount = map => Object.entries(map).sort((a, b) => b[1] - a[1] || nameOf(a[0]).localeCompare(nameOf(b[0]), L.locale));
 const own = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);
+const typeName = t => t === "migraine" ? tr("migraine") : t === "headache" ? tr("headache") : "";
+
+function setLang(l) {
+  lang = TEXT[l] ? l : "de";
+  L = TEXT[lang];
+  const f = opts => new Intl.DateTimeFormat(L.locale, opts);
+  fmtLong = f({ weekday: "long", day: "numeric", month: "long" });
+  fmtMonth = f({ month: "long" });
+  fmtMonthShort = f({ month: "short" });
+  fmtShort = f({ weekday: "short", day: "numeric", month: "long" });
+  fmtDate = f({ day: "numeric", month: "numeric", year: "numeric" });
+  fmtNum = new Intl.NumberFormat(L.locale, { maximumFractionDigits: 1 });
+  document.documentElement.lang = lang;
+  document.title = L.appTitle;
+  document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = tr(el.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-ph]").forEach(el => { el.placeholder = tr(el.dataset.i18nPh); });
+  document.querySelectorAll("[data-i18n-aria]").forEach(el => { el.setAttribute("aria-label", tr(el.dataset.i18nAria)); });
+}
 
 // ---------- Datenmodell: ein Eintrag pro Tag ----------
 function normDay(raw) {
@@ -433,8 +625,7 @@ function save() {
   clearTimeout(saveTimer);
   saveTimer = 0;
   for (const k of Object.keys(S.days)) if (isEmptyDay(S.days[k])) delete S.days[k];
-  if (!writeLS(DATA_KEY, JSON.stringify({ days: S.days, ...lists() })))
-    toast("Speichern fehlgeschlagen. Bitte gleich eine Sicherung exportieren.");
+  if (!writeLS(DATA_KEY, JSON.stringify({ days: S.days, ...lists() }))) toast(tr("saveFailed"));
 }
 function saveSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(save, 400); }
 const flush = () => { if (saveTimer) save(); };
@@ -464,19 +655,19 @@ function goDay(k) {
 // ---------- Meldung unten ----------
 let toastTimer;
 function toast(msg, action) {
-  const t = $("toast");
-  t.textContent = msg;
-  t.classList.toggle("action", !!action);
+  const el = $("toast");
+  el.textContent = msg;
+  el.classList.toggle("action", !!action);
   if (action) {
     const b = document.createElement("button");
     b.type = "button";
     b.textContent = action.label;
-    b.addEventListener("click", ev => { ev.stopPropagation(); t.classList.remove("show", "action"); action.fn(); });
-    t.appendChild(b);
+    b.addEventListener("click", ev => { ev.stopPropagation(); el.classList.remove("show", "action"); action.fn(); });
+    el.appendChild(b);
   }
-  t.classList.add("show");
+  el.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove("show", "action"), action ? 5000 : 1700);
+  toastTimer = setTimeout(() => el.classList.remove("show", "action"), action ? 5000 : 1700);
 }
 
 // ---------- Tab „Tag“ ----------
@@ -485,25 +676,25 @@ function chipHTML(kind, sel) {
   const list = union(K.defaults.filter(x => !S[K.hidden].includes(x)), custom);
   const orphans = sel.filter(x => !list.includes(x)); // gewählt, aber inzwischen aus der Liste gelöscht
   return [...list, ...orphans].map(v =>
-    `<button class="chip${custom.includes(v) ? " custom" : ""}${orphans.includes(v) ? " orphan" : ""}" data-act="tog" data-k="${kind}" data-v="${esc(v)}" aria-pressed="${sel.includes(v)}">${esc(v)}</button>`
+    `<button class="chip${custom.includes(v) ? " custom" : ""}${orphans.includes(v) ? " orphan" : ""}" data-act="tog" data-k="${kind}" data-v="${esc(v)}" aria-pressed="${sel.includes(v)}">${esc(nameOf(v))}</button>`
   ).join("") + (S.adding === kind
-    ? `<form class="addform" data-form="${kind}"><input id="addInput" maxlength="40" placeholder="${esc(K.ph)}" autocomplete="off" enterkeyhint="done" aria-label="${esc(K.addLabel)}"><button type="submit">Hinzufügen</button><button type="button" class="ghost" data-act="cancelAdd">Abbrechen</button></form>`
-    : `<button class="chip add" data-act="add" data-k="${kind}">+ ${esc(K.addLabel)}</button>`);
+    ? `<form class="addform" data-form="${kind}"><input id="addInput" maxlength="40" placeholder="${esc(tr("ph" + kind))}" autocomplete="off" enterkeyhint="done" aria-label="${esc(tr("add" + kind))}"><button type="submit">${tr("add")}</button><button type="button" class="ghost" data-act="cancelAdd">${tr("cancel")}</button></form>`
+    : `<button class="chip add" data-act="add" data-k="${kind}">+ ${esc(tr("add" + kind))}</button>`);
 }
 
 function renderTag() {
   const k = S.date, d = getDay(k), tk = todayKey(), diff = daysBetween(k, tk);
   const draft = $("addInput"), draftText = draft?.value || "", draftFocus = !!draft && document.activeElement === draft;
 
-  $("dayEyebrow").textContent = diff === 0 ? "Heute" : diff === 1 ? "Gestern" : parseKey(k).getFullYear();
+  $("dayEyebrow").textContent = diff === 0 ? tr("today") : diff === 1 ? tr("yesterday") : parseKey(k).getFullYear();
   $("dayTitle").textContent = fmtLong.format(parseKey(k));
   $("todayLink").hidden = diff === 0;
   $("nextDayBtn").disabled = k >= tk;
   for (const [btn, sub, type] of [["btnMig", "migSub", "migraine"], ["btnHead", "headSub", "headache"]]) {
     $(btn).setAttribute("aria-pressed", d.type === type);
-    $(sub).textContent = d.type === type ? "eingetragen ✓" : diff === 0 ? "heute" : "an diesem Tag";
+    $(sub).textContent = d.type === type ? tr("subLogged") : diff === 0 ? tr("subToday") : tr("subPast");
   }
-  $("typeHint").textContent = d.type ? "Nochmals tippen hebt die Auswahl auf." : `Tippe an, was ${diff === 0 ? "heute zutrifft" : "an diesem Tag zutraf"}.`;
+  $("typeHint").textContent = d.type ? tr("hintSel") : diff === 0 ? tr("hintToday") : tr("hintPast");
 
   $("intensityWrap").hidden = !d.type;
   const sc = $("scale");
@@ -513,18 +704,18 @@ function renderTag() {
   for (const kind of KIND_KEYS) {
     const K = KINDS[kind], sel = d[K.field], nHidden = S[K.hidden].length;
     $("chips" + kind).innerHTML = chipHTML(kind, sel);
-    $("tools" + kind).innerHTML = `<span>Zum Löschen gedrückt halten und in den Papierkorb ziehen</span>` +
-      (nHidden ? `<button class="linkbtn" data-act="restore" data-k="${kind}">Gelöschte Standardeinträge zurückholen (${nHidden})</button>` : "");
+    $("tools" + kind).innerHTML = `<span>${tr("delHint")}</span>` +
+      (nHidden ? `<button class="linkbtn" data-act="restore" data-k="${kind}">${tr("restore", nHidden)}</button>` : "");
     const c = $("cnt" + kind);
     c.hidden = !sel.length;
     c.textContent = sel.length;
   }
   $("doses").innerHTML = d.meds.map(m => {
-    const n = doseOf(d, m), v = esc(m);
-    return `<div class="dose"><span class="dose-name">${v}</span>` +
-      `<button class="step" data-act="doseDec" data-v="${v}" aria-label="${n === 1 ? v + " entfernen" : "Eine weniger"}">${n === 1 ? "✕" : "−"}</button>` +
+    const n = doseOf(d, m), v = esc(m), name = esc(nameOf(m));
+    return `<div class="dose"><span class="dose-name">${name}</span>` +
+      `<button class="step" data-act="doseDec" data-v="${v}" aria-label="${n === 1 ? esc(tr("doseDel", nameOf(m))) : tr("doseLess")}">${n === 1 ? "✕" : "−"}</button>` +
       `<span class="dose-n">${n}×</span>` +
-      `<button class="step" data-act="doseInc" data-v="${v}" aria-label="Eine mehr"${n >= MAX_DOSE ? " disabled" : ""}>+</button></div>`;
+      `<button class="step" data-act="doseInc" data-v="${v}" aria-label="${tr("doseMore")}"${n >= MAX_DOSE ? " disabled" : ""}>+</button></div>`;
   }).join("");
 
   // Begonnene Eingabe eines eigenen Eintrags beim Neuzeichnen behalten
@@ -544,14 +735,14 @@ function deleteItem(kind, v) {
   else return;
   save();
   renderTag();
-  toast(`„${v}“ gelöscht`, {
-    label: "Rückgängig",
+  toast(tr("deleted", nameOf(v)), {
+    label: tr("undo"),
     fn: () => {
       if (wasCustom) S[K.custom] = union(S[K.custom], [v]);
       else S[K.hidden] = S[K.hidden].filter(x => x !== v);
       save();
       renderTag();
-      toast(`„${v}“ ist wieder da`);
+      toast(tr("isBack", nameOf(v)));
     }
   });
 }
@@ -560,7 +751,7 @@ function deleteItem(kind, v) {
 function renderCal() {
   const first = parseKey(S.calMonth + "-01"), y = first.getFullYear(), m = first.getMonth() + 1;
   const len = new Date(y, m, 0).getDate(), tk = todayKey(), month = fmtMonth.format(first);
-  let h = WEEKDAYS.map(w => `<div class="wd">${w}</div>`).join("") + `<div class="cell out"></div>`.repeat((first.getDay() + 6) % 7);
+  let h = L.weekdays.map(w => `<div class="wd">${w}</div>`).join("") + `<div class="cell out"></div>`.repeat((first.getDay() + 6) % 7);
   let mig = 0, head = 0;
   for (let dd = 1; dd <= len; dd++) {
     const k = `${y}-${pad(m)}-${pad(dd)}`, d = S.days[k], cls = ["cell"];
@@ -569,15 +760,15 @@ function renderCal() {
     if (k === tk) cls.push("today");
     if (k > tk) cls.push("future");
     const extra = d && (d.triggers.length || d.symptoms.length || d.meds.length || d.note.trim());
-    const label = fmtLong.format(parseKey(k)) + (d?.type ? ", " + TYPE_LABEL[d.type] : "");
+    const label = fmtLong.format(parseKey(k)) + (d?.type ? ", " + typeName(d.type) : "");
     h += `<button class="${cls.join(" ")}" data-act="openDay" data-v="${k}"${k > tk ? " disabled" : ""} aria-label="${label}">${dd}<span class="dot${extra ? "" : " none"}"></span></button>`;
   }
   $("calYear").textContent = y;
   $("calTitle").textContent = month;
   $("cal").innerHTML = h;
   $("monthSum").innerHTML =
-    `<div class="tile mig"><b>${mig}</b><span>Migränetage im ${month}</span></div>` +
-    `<div class="tile head"><b>${head}</b><span>Kopfschmerztage im ${month}</span></div>`;
+    `<div class="tile mig"><b>${mig}</b><span>${tr("migIn", month)}</span></div>` +
+    `<div class="tile head"><b>${head}</b><span>${tr("headIn", month)}</span></div>`;
 }
 
 // ---------- Tab „Notizen“ ----------
@@ -590,36 +781,36 @@ function renderNotes() {
   const q = S.query.trim(), ql = q.toLowerCase();
   const items = Object.keys(S.days).sort().reverse()
     .map(k => [k, S.days[k]])
-    .filter(([, d]) => d.note.trim() && (!ql || [d.note, ...d.meds, ...d.triggers, ...d.symptoms].some(t => t.toLowerCase().includes(ql))));
+    .filter(([, d]) => d.note.trim() && (!ql || [d.note, ...[...d.meds, ...d.triggers, ...d.symptoms].map(nameOf)].some(t => t.toLowerCase().includes(ql))));
   const box = $("notesList");
   if (!items.length) {
     box.innerHTML = q
-      ? `<div class="empty"><strong>Keine Treffer</strong><span>Keine Notiz enthält „${esc(q)}“.</span></div>`
-      : `<div class="empty"><strong>Noch keine Notizen</strong><span>Schreib im Tab „Tag“ unter „Notiz“ etwas auf. Alle Notizen sammeln sich dann hier, nach Monaten sortiert.</span><button class="btn" data-act="tab" data-v="tag">Notiz schreiben</button></div>`;
+      ? `<div class="empty"><strong>${tr("noHitsT")}</strong><span>${esc(tr("noHits", q))}</span></div>`
+      : `<div class="empty"><strong>${tr("noNotesT")}</strong><span>${tr("noNotes")}</span><button class="btn" data-act="tab" data-v="tag">${tr("writeNote")}</button></div>`;
     return;
   }
   const groups = new Map();
   items.forEach(it => { const ym = it[0].slice(0, 7); groups.set(ym, [...(groups.get(ym) || []), it]); });
   box.innerHTML = [...groups].map(([ym, list]) =>
-    `<div class="monthgroup"><div class="eyebrow">${fmtMonth.format(parseKey(ym + "-01"))} ${ym.slice(0, 4)} · ${plural(list.length, "Notiz", "Notizen")}</div>` +
+    `<div class="monthgroup"><div class="eyebrow">${fmtMonth.format(parseKey(ym + "-01"))} ${ym.slice(0, 4)} · ${tr("nNotes", list.length)}</div>` +
     list.map(([k, d]) => `
       <button class="note-item" data-act="openDay" data-v="${k}">
-        <div class="top"><strong>${fmtShort.format(parseKey(k))}</strong>${d.type ? `<span class="badge ${d.type === "migraine" ? "mig" : "head"}">${TYPE_LABEL[d.type]}${d.intensity ? ` · ${d.intensity}/10` : ""}</span>` : ""}</div>
+        <div class="top"><strong>${fmtShort.format(parseKey(k))}</strong>${d.type ? `<span class="badge ${d.type === "migraine" ? "mig" : "head"}">${typeName(d.type)}${d.intensity ? ` · ${d.intensity}/10` : ""}</span>` : ""}</div>
         <p>${highlight(d.note, q)}</p>
         ${d.meds.length || d.triggers.length || d.symptoms.length ? `<div class="minichips">${
-          d.meds.map(t => `<span class="med">${doseOf(d, t) > 1 ? doseOf(d, t) + "× " : ""}${esc(t)}</span>`).join("")}${
-          [...d.triggers, ...d.symptoms].map(t => `<span>${esc(t)}</span>`).join("")}</div>` : ""}
+          d.meds.map(t => `<span class="med">${doseOf(d, t) > 1 ? doseOf(d, t) + "× " : ""}${esc(nameOf(t))}</span>`).join("")}${
+          [...d.triggers, ...d.symptoms].map(t => `<span>${esc(nameOf(t))}</span>`).join("")}</div>` : ""}
       </button>`).join("") + `</div>`
   ).join("");
 }
 
 // ---------- Tab „Statistik“ ----------
 function renderStats() {
-  $("rangeSeg").innerHTML = RANGES.map(([v, l]) => `<button data-act="range" data-v="${v}" aria-pressed="${S.range === v}">${l}</button>`).join("");
+  $("rangeSeg").innerHTML = RANGES.map(v => `<button data-act="range" data-v="${v}" aria-pressed="${S.range === v}">${tr("r" + v)}</button>`).join("");
   const tk = todayKey(), body = $("statsBody");
   const keys = Object.keys(S.days).filter(k => k <= tk && !isEmptyDay(S.days[k])).sort();
   if (!keys.length) {
-    body.innerHTML = `<div class="empty"><strong>Noch keine Daten</strong><span>Sobald du Migräne- oder Kopfschmerztage einträgst, siehst du hier, wie oft sie vorkommen und welche Trigger und Symptome am häufigsten sind.</span><button class="btn" data-act="tab" data-v="tag">Ersten Tag eintragen</button></div>` + dataPanel();
+    body.innerHTML = `<div class="empty"><strong>${tr("noDataT")}</strong><span>${tr("noData")}</span><button class="btn" data-act="tab" data-v="tag">${tr("firstDay")}</button></div>`;
     return;
   }
   const start = S.range === "all" ? keys[0] : addDays(tk, 1 - Number(S.range));
@@ -633,20 +824,19 @@ function renderStats() {
   const chart = monthChart(inR, start, tk);
 
   body.innerHTML = `<div class="tiles">
-      <div class="tile mig"><b>${mig.length}</b><span>Migränetage</span></div>
-      <div class="tile head"><b>${head.length}</b><span>Kopfschmerztage</span></div>
-      <div class="tile"><b>${f1(mig.length / months)}</b><span>Migränetage pro Monat (Ø)</span></div>
-      <div class="tile"><b>${since ?? "–"}</b><span>${since === null ? "Noch keine Migräne erfasst" : since === 1 ? "Tag seit letzter Migräne" : "Tage seit letzter Migräne"}</span></div>
-      <div class="tile"><b>${f1(head.length / months)}</b><span>Kopfschmerztage pro Monat (Ø)</span></div>
-      <div class="tile"><b>${ints.length ? f1(ints.reduce((a, b) => a + b, 0) / ints.length) : "–"}</b><span>Ø Stärke (von 10)</span></div>
+      <div class="tile mig"><b>${mig.length}</b><span>${tr("migDays")}</span></div>
+      <div class="tile head"><b>${head.length}</b><span>${tr("headDays")}</span></div>
+      <div class="tile"><b>${f1(mig.length / months)}</b><span>${tr("migPM")}</span></div>
+      <div class="tile"><b>${since ?? "–"}</b><span>${since === null ? tr("sinceNone") : tr("since", since)}</span></div>
+      <div class="tile"><b>${f1(head.length / months)}</b><span>${tr("headPM")}</span></div>
+      <div class="tile"><b>${ints.length ? f1(ints.reduce((a, b) => a + b, 0) / ints.length) : "–"}</b><span>${tr("avgInt")}</span></div>
     </div>
-    <div class="panel"><h2>Verlauf pro Monat${chart.cut ? " (letzte 12)" : ""}</h2>${chart.svg}<div class="legend"><span><i class="sw mig"></i>Migräne</span><span><i class="sw head"></i>Kopfschmerzen</span></div></div>` +
-    rankPanel("Häufigste Trigger", mig, "triggers", "var(--mig)", "Noch keine Trigger an Migränetagen erfasst. Wähle im Tab „Tag“ aus, was der Migräne vorausging.") +
-    rankPanel("Häufigste Aura-Symptome", mig, "symptoms", "var(--head)", "Noch keine Aura-Symptome an Migränetagen erfasst.") +
+    <div class="panel"><h2>${tr("perMonth")}${chart.cut ? tr("last12") : ""}</h2>${chart.svg}<div class="legend"><span><i class="sw mig"></i>${tr("migraine")}</span><span><i class="sw head"></i>${tr("headache")}</span></div></div>` +
+    rankPanel(tr("topT"), mig, "triggers", "var(--mig)", tr("noT")) +
+    rankPanel(tr("topS"), mig, "symptoms", "var(--head)", tr("noS")) +
     medPanel(inR, months) +
-    weekdayPanel("Migräne nach Wochentag", mig, "var(--mig)", "Migräneattacken") +
-    weekdayPanel("Kopfschmerzen nach Wochentag", head, "var(--head)", "Kopfschmerztage") +
-    dataPanel();
+    weekdayPanel(tr("wdMig"), mig, "var(--mig)", tr("noWdMig")) +
+    weekdayPanel(tr("wdHead"), head, "var(--head)", tr("noWdHead"));
 }
 
 function monthChart(inR, start, end) {
@@ -658,13 +848,13 @@ function monthChart(inR, start, end) {
   const max = Math.max(1, ...data.map(x => x.m + x.h));
   const step = max <= 5 ? 1 : max <= 10 ? 2 : max <= 20 ? 5 : 10;
   const top = Math.ceil(max / step) * step;
-  const W = 340, H = 170, L = 24, R = 6, T = 10, B = 24;
-  const cw = (W - L - R) / data.length, bw = Math.min(26, cw * 0.62);
+  const W = 340, H = 170, Lp = 24, R = 6, T = 10, B = 24;
+  const cw = (W - Lp - R) / data.length, bw = Math.min(26, cw * 0.62);
   const y = v => T + (H - T - B) * (1 - v / top);
-  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Migräne- und Kopfschmerztage pro Monat">`;
-  for (let v = 0; v <= top; v += step) s += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L - 6}" y="${y(v) + 3.5}" text-anchor="end">${v}</text>`;
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${tr("chartAria")}">`;
+  for (let v = 0; v <= top; v += step) s += `<line x1="${Lp}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${Lp - 6}" y="${y(v) + 3.5}" text-anchor="end">${v}</text>`;
   data.forEach((x, i) => {
-    const cx = L + cw * i + cw / 2, x0 = cx - bw / 2;
+    const cx = Lp + cw * i + cw / 2, x0 = cx - bw / 2;
     if (x.m) s += `<rect x="${x0}" y="${y(x.m)}" width="${bw}" height="${y(0) - y(x.m)}" rx="3" fill="var(--mig)"/>`;
     if (x.h) s += `<rect x="${x0}" y="${y(x.m + x.h)}" width="${bw}" height="${y(x.m) - y(x.m + x.h)}" rx="3" fill="var(--head)"/>`;
     s += `<text x="${cx}" y="${H - 8}" text-anchor="middle">${fmtMonthShort.format(parseKey(x.ym + "-01")).replace(".", "")}</text>`;
@@ -677,21 +867,21 @@ function rankPanel(title, migKeys, field, color, emptyMsg) {
   const cnt = counter(), total = migKeys.length;
   migKeys.forEach(k => S.days[k][field].forEach(t => inc(cnt, t)));
   const rows = sortByCount(cnt).slice(0, 10);
-  const head = `<h2>${title}</h2><p class="muted small lead">Nur Migränetage im gewählten Zeitraum</p>`;
-  if (!rows.length) return `<div class="panel">${head}<p class="muted small">${total ? emptyMsg : "Im gewählten Zeitraum gab es keine Migräne."}</p></div>`;
+  const head = `<h2>${title}</h2><p class="muted small lead">${tr("onlyMig")}</p>`;
+  if (!rows.length) return `<div class="panel">${head}<p class="muted small">${total ? emptyMsg : tr("noMig")}</p></div>`;
   const max = rows[0][1];
   return `<div class="panel">${head}<div class="rank">${rows.map(([n, c], i) => `
     <div class="rank-row" style="--fill:${color}">
-      <span class="pos">${i + 1}.</span><span class="name">${esc(n)}</span><span class="val">${c}×</span>
+      <span class="pos">${i + 1}.</span><span class="name">${esc(nameOf(n))}</span><span class="val">${c}×</span>
       <span class="bar"><i style="width:${(c / max) * 100}%"></i></span>
-      <span class="sub">bei ${c} von ${plural(total, "Migräneattacke", "Migräneattacken")} (${Math.round((c / total) * 100)} %)</span>
+      <span class="sub">${tr("inAttacks", c, total, Math.round((c / total) * 100))}</span>
     </div>`).join("")}</div></div>`;
 }
 
 function medPanel(inR, months) {
   const withMeds = inR.filter(k => S.days[k].meds.length);
-  const head = `<h2>Schmerzmittel &amp; Medikamente</h2>`;
-  if (!withMeds.length) return `<div class="panel">${head}<p class="muted small">Im gewählten Zeitraum keine Medikamente erfasst.</p></div>`;
+  const head = `<h2>${tr("secM")}</h2>`;
+  if (!withMeds.length) return `<div class="panel">${head}<p class="muted small">${tr("noMeds")}</p></div>`;
   const days = counter(), doses = counter(), byMig = counter(), byHead = counter();
   let total = 0;
   withMeds.forEach(k => {
@@ -706,57 +896,75 @@ function medPanel(inR, months) {
   const perMonth = withMeds.length / months, rows = sortByCount(days), max = rows[0][1];
   return `<div class="panel">${head}
     <div class="tiles">
-      <div class="tile"><b>${withMeds.length}</b><span>Tage mit Medikamenten</span></div>
-      <div class="tile"><b>${f1(perMonth)}</b><span>Tage pro Monat (Ø)</span></div>
-      <div class="tile"><b>${total}</b><span>Einnahmen insgesamt</span></div>
-      <div class="tile"><b>${f1(total / withMeds.length)}</b><span>Einnahmen pro Medikamententag (Ø)</span></div>
+      <div class="tile"><b>${withMeds.length}</b><span>${tr("medDays")}</span></div>
+      <div class="tile"><b>${f1(perMonth)}</b><span>${tr("medPM")}</span></div>
+      <div class="tile"><b>${total}</b><span>${tr("doses")}</span></div>
+      <div class="tile"><b>${f1(total / withMeds.length)}</b><span>${tr("dosesPD")}</span></div>
     </div>
-    ${perMonth >= 10 ? `<p class="msg err">Im Schnitt an 10 oder mehr Tagen pro Monat Schmerzmittel. Das solltest du mit deiner Ärztin oder deinem Arzt besprechen.</p>` : ""}
+    ${perMonth >= 10 ? `<p class="msg err">${tr("overuse")}</p>` : ""}
     <div class="rank">${rows.map(([n, c], i) => `
       <div class="rank-row" style="--fill:var(--fg)">
-        <span class="pos">${i + 1}.</span><span class="name">${esc(n)}</span><span class="val">${plural(c, "Tag", "Tage")}</span>
+        <span class="pos">${i + 1}.</span><span class="name">${esc(nameOf(n))}</span><span class="val">${tr("nDays", c)}</span>
         <span class="bar"><i style="width:${(c / max) * 100}%"></i></span>
-        <span class="sub">${plural(doses[n], "Einnahme", "Einnahmen")} · an ${byMig[n] || 0} Migräne- und ${byHead[n] || 0} Kopfschmerztagen</span>
+        <span class="sub">${tr("medSub", doses[n], byMig[n] || 0, byHead[n] || 0)}</span>
       </div>`).join("")}</div></div>`;
 }
 
-function weekdayPanel(title, keys, color, noun) {
-  if (!keys.length) return `<div class="panel"><h2>${title}</h2><p class="muted small">Keine ${noun} im gewählten Zeitraum.</p></div>`;
+function weekdayPanel(title, keys, color, emptyMsg) {
+  if (!keys.length) return `<div class="panel"><h2>${title}</h2><p class="muted small">${emptyMsg}</p></div>`;
   const wd = [0, 0, 0, 0, 0, 0, 0];
   keys.forEach(k => wd[(parseKey(k).getDay() + 6) % 7]++);
   const max = Math.max(...wd);
-  return `<div class="panel"><h2>${title}</h2><div class="wkd">${WEEKDAYS.map((n, i) =>
+  return `<div class="panel"><h2>${title}</h2><div class="wkd">${L.weekdays.map((n, i) =>
     `<div><span>${wd[i]}</span><i style="height:${(wd[i] / max) * 70}%;background:${color}"></i>${n}</div>`).join("")}</div></div>`;
+}
+
+// ---------- Tab „Einstellungen“ ----------
+const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+let installPrompt = null; // Android/Chrome: Installationsdialog, den die App selbst öffnen darf
+
+function renderSettings() {
+  const install = isStandalone() ? `<p class="msg">${tr("installed")}</p>`
+    : installPrompt ? `<div><button class="btn" data-act="install">${tr("installBtn")}</button></div>`
+    : `<p class="muted small">${tr(isIOS ? "installIos" : "installOther")}</p>`;
+  $("setBody").innerHTML =
+    `<div class="panel"><h2>${tr("language")}</h2><div class="seg" role="group" aria-label="${tr("language")}">` +
+      [["de", "Deutsch"], ["en", "English"]].map(([v, l]) => `<button data-act="lang" data-v="${v}" aria-pressed="${lang === v}" lang="${v}">${l}</button>`).join("") +
+    `</div></div>` +
+    dataPanel() +
+    `<div class="panel"><h2>${tr("installT")}</h2>${install}</div>` +
+    `<div class="panel"><h2>${tr("aboutT")}</h2><p class="muted small">${tr("about")}</p></div>`;
 }
 
 // ---------- Sicherung & Import ----------
 function dataPanel() {
-  let h = `<div class="panel" id="dataPanel"><h2>Daten exportieren &amp; importieren</h2>`;
+  let h = `<div class="panel" id="dataPanel"><h2>${tr("dataT")}</h2>`;
   if (S.imp) {
     const p = S.imp.p, keys = Object.keys(p.days).sort();
     const existing = Object.keys(S.days).filter(k => !isEmptyDay(S.days[k])).length;
     const overlap = keys.filter(k => S.days[k] && !isEmptyDay(S.days[k])).length;
     const nCustom = KIND_KEYS.reduce((n, kind) => n + p[KINDS[kind].custom].length, 0);
     const nType = t => keys.filter(k => p.days[k].type === t).length;
-    const fmtD = k => parseKey(k).toLocaleDateString("de-DE");
+    const fd = k => fmtDate.format(parseKey(k));
     h += `<div class="importbox"><strong>${esc(p.fileName)}</strong>
-      <span class="small">${plural(keys.length, "Tag", "Tage")} mit Einträgen (${fmtD(keys[0])} bis ${fmtD(keys[keys.length - 1])}): ${nType("migraine")} × Migräne, ${nType("headache")} × Kopfschmerzen.${overlap ? ` ${overlap} davon gibt es schon in der App.` : ""}${nCustom ? ` Dazu ${plural(nCustom, "eigener Eintrag", "eigene Einträge")} (Medikamente, Trigger, Symptome).` : ""}</span>`;
+      <span class="small">${tr("impSummary", keys.length, fd(keys[0]), fd(keys[keys.length - 1]), nType("migraine"), nType("headache"))}${overlap ? tr("impOverlap", overlap) : ""}${nCustom ? tr("impCustom", nCustom) : ""}</span>`;
     h += S.imp.confirm
-      ? `<p class="msg err">Alle ${existing} bisherigen Einträge werden gelöscht und durch die Datei ersetzt. Das lässt sich nicht rückgängig machen.</p>
-         <div class="btnrow"><button class="btn danger" data-act="importReplaceGo">Ja, alles ersetzen</button><button class="btn ghost" data-act="importBack">Zurück</button></div>`
-      : `<div class="opt"><button class="btn" data-act="importMerge">Zusammenführen</button><span>Neue Tage kommen dazu. Tage, die es schon gibt, werden mit der Datei überschrieben.</span></div>` +
-        (existing ? `<div class="opt"><button class="btn ghost" data-act="importReplace">Alles ersetzen</button><span>Löscht deine bisherigen Einträge und übernimmt nur die Datei.</span></div>` : "") +
-        `<div><button class="linkbtn" data-act="importCancel">Abbrechen</button></div>`;
+      ? `<p class="msg err">${tr("replaceWarn", existing)}</p>
+         <div class="btnrow"><button class="btn danger" data-act="importReplaceGo">${tr("replaceGo")}</button><button class="btn ghost" data-act="importBack">${tr("back")}</button></div>`
+      : `<div class="opt"><button class="btn" data-act="importMerge">${tr("merge")}</button><span>${tr("mergeInfo")}</span></div>` +
+        (existing ? `<div class="opt"><button class="btn ghost" data-act="importReplace">${tr("replace")}</button><span>${tr("replaceInfo")}</span></div>` : "") +
+        `<div><button class="linkbtn" data-act="importCancel">${tr("cancel")}</button></div>`;
     h += `</div>`;
   } else {
     const last = readNum(BACKUP_KEY), ago = last ? Math.floor((Date.now() - last) / DAY_MS) : null;
-    h += `<p class="muted small">Die <b>Sicherung</b> enthält alles: alle Tage und deine Einstellungen, also eigene Medikamente, Trigger und Symptome sowie gelöschte Standardeinträge. Beim Import wird beides wiederhergestellt. Die <b>Tabelle</b> (CSV) öffnet sich in Excel oder Numbers, praktisch für den Arzttermin.</p>
-      <div class="subhead">Exportieren</div>
-      <div class="btnrow"><button class="btn ghost" data-act="exportJson">Sicherung speichern</button><button class="btn ghost" data-act="exportCsv">Tabelle (CSV)</button></div>
-      <span class="muted small">${ago === null ? "Noch keine Sicherung gespeichert." : `Letzte Sicherung: ${ago === 0 ? "heute" : ago === 1 ? "gestern" : `vor ${ago} Tagen`}`}</span>
-      <div class="subhead">Importieren</div>
-      <div class="btnrow"><button class="btn" data-act="importPick">Datei auswählen …</button></div>
-      <span class="muted small">Sicherungsdatei (.json) oder Tabelle (.csv) aus dieser App. Vor dem Import siehst du, was übernommen wird.</span>`;
+    h += `<p class="muted small">${tr("dataInfo")}</p>
+      <div class="subhead">${tr("exportH")}</div>
+      <div class="btnrow"><button class="btn ghost" data-act="exportJson">${tr("saveBackup")}</button><button class="btn ghost" data-act="exportCsv">${tr("csvBtn")}</button></div>
+      <span class="muted small">${ago === null ? tr("noBackup") : tr("lastBackup", ago)}</span>
+      <div class="subhead">${tr("importH")}</div>
+      <div class="btnrow"><button class="btn" data-act="importPick">${tr("pickFile")}</button></div>
+      <span class="muted small">${tr("importInfo")}</span>`;
     if (S.importMsg) h += `<p class="msg${S.importErr ? " err" : ""}">${esc(S.importMsg)}</p>`;
   }
   return h + `</div>`;
@@ -771,11 +979,13 @@ function jsonExport() {
 function csvExport() {
   // Zellen, die mit = + - @ beginnen, würde Excel als Formel lesen → mit ' als Text markieren
   const cell = v => { let s = String(v ?? ""); if (/^[=+\-@]/.test(s)) s = "'" + s; return `"${s.replace(/"/g, '""')}"`; };
-  const rows = [["Datum", "Art", "Stärke", "Medikamente", "Trigger", "Aura-Symptome", "Notiz"]];
+  const rows = [L.csvHead];
   Object.keys(S.days).sort().forEach(k => {
     const d = S.days[k];
     if (isEmptyDay(d)) return;
-    rows.push([k, TYPE_LABEL[d.type] || "", d.intensity || "", d.meds.map(m => (doseOf(d, m) > 1 ? doseOf(d, m) + "x " : "") + m).join(" | "), d.triggers.join(", "), d.symptoms.join(", "), d.note]);
+    rows.push([k, typeName(d.type), d.intensity || "",
+      d.meds.map(m => (doseOf(d, m) > 1 ? doseOf(d, m) + "x " : "") + nameOf(m)).join(" | "),
+      d.triggers.map(nameOf).join(", "), d.symptoms.map(nameOf).join(", "), d.note]);
   });
   return "﻿" + rows.map(r => r.map(cell).join(";")).join("\r\n");
 }
@@ -816,26 +1026,27 @@ function parseImport(text, fileName) {
   const add = (date, raw) => { const k = normDate(date), d = normDay(raw); if (k && !isEmptyDay(d)) days[k] = d; };
   if (/^\s*[[{]/.test(text)) {
     let obj;
-    try { obj = JSON.parse(text); } catch { throw new Error("Die Datei ist keine gültige Sicherung."); }
+    try { obj = JSON.parse(text); } catch { throw new Error(tr("errJson")); }
     const src = Array.isArray(obj) ? obj : obj?.days;
     if (Array.isArray(src)) src.forEach(d => add(d?.date, d));
     else Object.entries(src || {}).forEach(([k, d]) => add(k, d));
     LIST_KEYS.forEach(k => { customs[k] = strList(obj?.[k]); });
   } else {
     const rows = parseCSV(text).map(r => r.map(c => c.replace(/^'(?=[=+\-@])/, "")));
-    if (rows.length < 2) throw new Error("In der Tabelle wurden keine Einträge gefunden.");
+    if (rows.length < 2) throw new Error(tr("errRows"));
     const head = rows[0].map(h => h.trim().toLowerCase());
     const col = (...names) => head.findIndex(h => names.some(n => h.startsWith(n)));
     const iDate = col("datum", "date"), iType = col("art", "typ", "type"), iInt = col("stärke", "staerke", "intensity"),
-          iMed = col("medikament", "schmerzmittel", "meds"), iTrig = col("trigger"), iSym = col("aura", "symptom"), iNote = col("notiz", "note");
-    if (iDate < 0) throw new Error("Die Tabelle braucht eine Spalte „Datum“.");
+          iMed = col("medikament", "medication", "schmerzmittel", "meds"), iTrig = col("trigger"), iSym = col("aura", "symptom"), iNote = col("notiz", "note");
+    if (iDate < 0) throw new Error(tr("errDate"));
     const cell = (r, i) => (i >= 0 ? r[i] || "" : "").trim();
-    const split = (v, re) => v.split(re).map(x => x.trim()).filter(Boolean);
+    // Namen in beiden Sprachen erkennen und als gespeicherten (deutschen) Namen übernehmen
+    const split = (v, re) => v.split(re).map(x => canonical(x.trim())).filter(Boolean);
     rows.slice(1).forEach(r => {
       const t = cell(r, iType).toLowerCase(), meds = [], medCounts = {};
       // Medikamente enthalten Kommas („2,5 mg“), daher nur an „|“ trennen; „2x Name“ = Anzahl
-      split(cell(r, iMed), /\|/).forEach(item => {
-        const m = item.match(/^(\d+)\s*[x×]\s+(.+)$/i), name = m ? m[2].trim() : item;
+      cell(r, iMed).split("|").map(x => x.trim()).filter(Boolean).forEach(item => {
+        const m = item.match(/^(\d+)\s*[x×]\s+(.+)$/i), name = canonical(m ? m[2].trim() : item);
         if (!meds.includes(name)) meds.push(name);
         if (m && +m[1] > 1) medCounts[name] = +m[1];
       });
@@ -854,7 +1065,7 @@ function parseImport(text, fileName) {
     const K = KINDS[kind];
     customs[K.custom] = union(customs[K.custom], d[K.field].filter(v => !K.defaults.includes(v)));
   }));
-  if (!Object.keys(days).length) throw new Error("In der Datei wurden keine Tage mit Einträgen gefunden.");
+  if (!Object.keys(days).length) throw new Error(tr("errEmpty"));
   return { fileName, days, ...customs };
 }
 
@@ -866,35 +1077,35 @@ function runImport(replace) {
   Object.assign(S.days, p.days);
   save();
   S.imp = null;
-  S.importMsg = `${plural(Object.keys(p.days).length, "Tag", "Tage")} importiert.`;
+  S.importMsg = tr("imported", Object.keys(p.days).length);
   S.importErr = false;
-  toast("Import abgeschlossen");
+  toast(tr("importDone"));
   renderAll();
 }
 
 async function giveFile(isJson) {
   const data = isJson ? jsonExport() : csvExport();
-  const filename = `migraene-tagebuch-${todayKey()}.${isJson ? "json" : "csv"}`;
+  const filename = `${tr("file")}-${todayKey()}.${isJson ? "json" : "csv"}`;
   const file = new File([data], filename, { type: isJson ? "application/json" : "text/csv" });
   const done = () => {
-    toast(isJson ? "Sicherung gespeichert" : "Tabelle gespeichert");
+    toast(tr(isJson ? "backupSaved" : "csvSaved"));
     if (isJson) writeLS(BACKUP_KEY, String(Date.now()));
     renderAll();
   };
   // iPhone: Teilen-Menü („In Dateien sichern“, AirDrop, Mail …)
-  if (navigator.canShare?.({ files: [file] })) {
+  if (isIOS && navigator.canShare?.({ files: [file] })) {
     try { await navigator.share({ files: [file], title: filename }); done(); }
-    catch (err) { if (err?.name !== "AbortError") toast("Teilen nicht möglich"); }
+    catch (err) { if (err?.name !== "AbortError") toast(tr("shareFailed")); }
     return;
   }
-  // Computer: normaler Download
+  // Android & Computer: normaler Download (landet im Ordner „Downloads“)
   const url = URL.createObjectURL(file), a = document.createElement("a");
   a.href = url;
   a.download = filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
   done();
 }
 
@@ -907,22 +1118,29 @@ function renderBackupHint() {
   box.hidden = !due;
   if (!due) return;
   const ago = last ? Math.floor((now - last) / DAY_MS) : null;
-  box.innerHTML = `<strong>Zeit für eine Sicherung</strong>
-    <span>${ago === null ? "Du hast noch keine Sicherung gespeichert." : `Deine letzte Sicherung ist ${ago} Tage her.`} Deine Einträge liegen nur auf diesem Gerät. Speichere die Sicherung z. B. in iCloud Drive, dann bleibt nichts verloren, auch bei einem neuen Handy.</span>
-    <div class="btnrow"><button class="btn" data-act="exportJson">Jetzt sichern</button><button class="btn ghost" data-act="backupLater">In einer Woche erinnern</button></div>`;
+  box.innerHTML = `<strong>${tr("backupT")}</strong>
+    <span>${ago === null ? tr("backupNever") : tr("backupAgo", ago)} ${tr("backupWhy")}</span>
+    <div class="btnrow"><button class="btn" data-act="exportJson">${tr("backupNow")}</button><button class="btn ghost" data-act="backupLater">${tr("backupLater")}</button></div>`;
 }
 
-// ---------- Tabs ----------
+// ---------- Tabs (die Android-Zurück-Taste führt von anderen Tabs zurück zu „Tag“) ----------
+const TABS = { tag: renderTag, cal: renderCal, notes: renderNotes, stats: renderStats, set: renderSettings };
 function renderAll() {
-  for (const t of ["tag", "cal", "notes", "stats"]) $("v-" + t).hidden = S.tab !== t;
+  for (const t in TABS) $("v-" + t).hidden = S.tab !== t;
   document.querySelectorAll(".tabbar button").forEach(b => b.setAttribute("aria-selected", b.dataset.v === S.tab));
-  ({ tag: renderTag, cal: renderCal, notes: renderNotes, stats: renderStats })[S.tab]();
+  TABS[S.tab]();
 }
-function setTab(t) {
+function setTab(t, fromHistory = false) {
+  if (!TABS[t]) t = "tag";
+  if (!fromHistory) {
+    if (t !== "tag") history[S.tab === "tag" ? "pushState" : "replaceState"]({ tab: t }, "");
+    else if (history.state?.tab) history.back();
+  }
   S.tab = t;
   renderAll();
   window.scrollTo(0, 0);
 }
+window.addEventListener("popstate", () => setTab(history.state?.tab || "tag", true));
 
 // ---------- Bedienung ----------
 document.addEventListener("click", e => {
@@ -934,7 +1152,7 @@ document.addEventListener("click", e => {
   switch (act) {
     case "setType":
       mutate(d => { if (d.type === v) { d.type = null; d.intensity = null; } else d.type = v; });
-      toast(getDay(S.date).type ? TYPE_LABEL[v] + " eingetragen" : "Auswahl aufgehoben");
+      toast(getDay(S.date).type ? tr("typeSet", typeName(v)) : tr("typeCleared"));
       renderTag(); break;
     case "setInt": mutate(d => { d.intensity = d.intensity === +v ? null : +v; }); renderTag(); break;
     case "tog": mutate(d => { const a = d[KINDS[kind].field], i = a.indexOf(v); i >= 0 ? a.splice(i, 1) : a.push(v); }); renderTag(); break;
@@ -942,7 +1160,7 @@ document.addEventListener("click", e => {
     case "doseDec": mutate(d => { const n = doseOf(d, v); if (n > 1) d.medCounts[v] = n - 1; else d.meds = d.meds.filter(x => x !== v); }); renderTag(); break;
     case "add": S.adding = kind; renderTag(); $("addInput")?.focus(); break;
     case "cancelAdd": S.adding = null; renderTag(); break;
-    case "restore": S[KINDS[kind].hidden] = []; save(); toast("Standardeinträge sind wieder da"); renderTag(); break;
+    case "restore": S[KINDS[kind].hidden] = []; save(); toast(tr("defaultsBack")); renderTag(); break;
     case "prevDay": goDay(addDays(S.date, -1)); renderTag(); break;
     case "nextDay": if (S.date < todayKey()) { goDay(addDays(S.date, 1)); renderTag(); } break;
     case "goToday": goDay(todayKey()); renderTag(); break;
@@ -955,19 +1173,23 @@ document.addEventListener("click", e => {
     }
     case "tab": setTab(v); break;
     case "range": S.range = v; renderStats(); break;
+    case "lang": writeLS(LANG_KEY, v); setLang(v); renderAll(); break;
+    case "install":
+      installPrompt?.prompt?.().catch?.(() => {});
+      installPrompt = null; renderSettings(); break;
     case "exportJson": giveFile(true); break;
     case "exportCsv": giveFile(false); break;
     case "backupLater": writeLS(SNOOZE_KEY, String(Date.now() + 7 * DAY_MS)); renderBackupHint(); break;
     case "importPick": { const f = $("importFile"); f.value = ""; f.click(); break; }
     case "importMerge": runImport(false); break;
-    case "importReplace": S.imp.confirm = true; renderStats(); break;
-    case "importBack": S.imp.confirm = false; renderStats(); break;
+    case "importReplace": S.imp.confirm = true; renderSettings(); break;
+    case "importBack": S.imp.confirm = false; renderSettings(); break;
     case "importReplaceGo": runImport(true); break;
-    case "importCancel": S.imp = null; S.importMsg = ""; renderStats(); break;
+    case "importCancel": S.imp = null; S.importMsg = ""; renderSettings(); break;
   }
 });
 
-// Eigenen Eintrag hinzufügen
+// Eigenen Eintrag hinzufügen (auch in der anderen Sprache geschriebene Standardnamen werden erkannt)
 document.addEventListener("submit", e => {
   const form = e.target.closest("form[data-form]");
   if (!form) return;
@@ -975,13 +1197,14 @@ document.addEventListener("submit", e => {
   const K = KINDS[form.dataset.form], input = form.querySelector("input");
   const val = input.value.trim().replace(/\s+/g, " ");
   if (!val) { input.focus(); return; }
-  const existing = [...K.defaults, ...S[K.custom]].find(x => x.toLowerCase() === val.toLowerCase());
+  const low = val.toLowerCase();
+  const existing = [...K.defaults, ...S[K.custom]].find(x => x.toLowerCase() === low || nameOf(x).toLowerCase() === low || canonical(val) === x);
   const name = existing || val;
   if (!existing) S[K.custom] = [...S[K.custom], name];
   S[K.hidden] = S[K.hidden].filter(x => x !== name);
   S.adding = null;
   mutate(d => { if (!d[K.field].includes(name)) d[K.field].push(name); });
-  toast(existing ? `„${name}“ ausgewählt` : `„${name}“ hinzugefügt`);
+  toast(tr(existing ? "picked" : "added", nameOf(name)));
   renderTag();
 });
 
@@ -1010,7 +1233,7 @@ function startDrag() {
   p.dragging = true;
   p.offX = p.x - r.left;
   p.offY = p.y - r.top;
-  p.ghost = Object.assign(document.createElement("div"), { className: "chip ghost", textContent: p.value });
+  p.ghost = Object.assign(document.createElement("div"), { className: "chip ghost", textContent: nameOf(p.value) });
   document.body.appendChild(p.ghost);
   p.chip.classList.remove("pressing");
   p.chip.classList.add("lifted");
@@ -1068,6 +1291,7 @@ document.addEventListener("mousedown", e => {
 });
 document.addEventListener("mousemove", e => { if (press && !fromTouch()) pressMove(e.clientX, e.clientY); });
 document.addEventListener("mouseup", e => { if (!fromTouch()) pressEnd(e.clientX, e.clientY); });
+// Android öffnet beim langen Drücken sonst ein Kontextmenü
 document.addEventListener("contextmenu", e => { if (holdChip(e.target)) e.preventDefault(); });
 
 // ---------- Notiz, Suche, Import-Datei ----------
@@ -1078,7 +1302,7 @@ $("note").addEventListener("input", e => {
   mutate(d => { d.note = ta.value; }, true);
   $("saveHint").textContent = "";
   clearTimeout(hintTimer);
-  hintTimer = setTimeout(() => { $("saveHint").textContent = "Gespeichert ✓"; }, 450);
+  hintTimer = setTimeout(() => { $("saveHint").textContent = tr("noteSaved"); }, 450);
 });
 $("note").addEventListener("blur", flush);
 $("noteSearch").addEventListener("input", e => { S.query = e.target.value; renderNotes(); });
@@ -1088,18 +1312,18 @@ $("importFile").addEventListener("change", async e => {
   S.importMsg = "";
   S.importErr = false;
   try {
-    if (file.size > 5 * 1024 * 1024) throw new Error("Die Datei ist zu groß (max. 5 MB).");
+    if (file.size > 5 * 1024 * 1024) throw new Error(tr("errSize"));
     S.imp = { p: parseImport(await file.text(), file.name), confirm: false };
   } catch (err) {
     S.imp = null;
-    S.importMsg = err.message || "Die Datei konnte nicht gelesen werden.";
+    S.importMsg = err.message || tr("errRead");
     S.importErr = true;
   }
-  renderStats();
+  setTab("set");
   $("dataPanel")?.scrollIntoView({ block: "center", behavior: "smooth" });
 });
 
-// ---------- Hintergrund, Mitternacht, mehrere Fenster ----------
+// ---------- Hintergrund, Mitternacht, mehrere Fenster, Installation ----------
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) { flush(); return; }
   syncToday();
@@ -1107,9 +1331,13 @@ document.addEventListener("visibilitychange", () => {
 });
 window.addEventListener("pagehide", flush);
 window.addEventListener("storage", e => { if (e.key === DATA_KEY) { load(); renderAll(); } });
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installPrompt = e; if (S.tab === "set") renderSettings(); });
+window.addEventListener("appinstalled", () => { installPrompt = null; if (S.tab === "set") renderSettings(); });
 
 // ---------- Start ----------
+setLang(readLS(LANG_KEY) || ((navigator.language || "de").toLowerCase().startsWith("de") ? "de" : "en"));
 load();
+history.replaceState(null, "");
 renderAll();
 try { navigator.storage?.persist?.()?.catch(() => {}); } catch {}
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {

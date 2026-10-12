@@ -6,11 +6,15 @@ Persönliches Tagebuch für Migräne- und Kopfschmerztage: Medikamente (mit Anza
 
 Alle Einträge bleiben auf dem Gerät, auf dem die App benutzt wird. Es gibt kein Konto, keinen Server und keine Verbindung zu Drittanbietern. Sicherungen lassen sich im Tab „Statistik“ exportieren und wieder importieren; die App erinnert regelmäßig daran.
 
-## Auf dem iPhone installieren
+Sprache: Deutsch oder Englisch (Tab „Einstellungen“).
 
-1. Link in **Safari** öffnen.
-2. Teilen-Symbol → **Zum Home-Bildschirm**.
-3. Ab jetzt die App über das Symbol starten (funktioniert auch offline).
+## Installieren
+
+**iPhone:** Link in **Safari** öffnen → Teilen-Symbol → **Zum Home-Bildschirm**.
+
+**Android:** Link in **Chrome** (oder Samsung Internet) öffnen → Tab „Einstellungen“ → **Zum Startbildschirm hinzufügen**, oder im Browser-Menü (⋮) **App installieren**.
+
+Danach die App über das Symbol starten (funktioniert auch offline).
 
 ## Aufbau
 
