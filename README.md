@@ -19,6 +19,7 @@ Danach die App über das Symbol starten (funktioniert auch offline).
 ## Aufbau
 
 - `docs/index.html` – die komplette App (HTML, CSS und JavaScript in einer Datei)
+- `node test.mjs` – prüft Export und Import (JSON und CSV); läuft vor jeder Veröffentlichung, bei Fehler wird nichts veröffentlicht
 - `docs/sw.js`, `docs/manifest.webmanifest`, Icons – werden von `build.mjs` erzeugt
 - `node build.mjs` – trägt die Sicherheitsrichtlinie (Prüfsumme des Skripts) ein und erzeugt Service Worker, Manifest und Icons. Läuft automatisch: beim Veröffentlichen über GitHub Actions (`.github/workflows/pages.yml`) und lokal vor jedem Commit (Git-Hook `.git/hooks/pre-commit`, muss nach einem neuen Klonen einmal angelegt werden).
 

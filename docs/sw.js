@@ -1,5 +1,5 @@
-// Version d59636e691 – wird von build.mjs erzeugt
-const CACHE = "migraene-d59636e691";
+// Version bf0c42c6fd – wird von build.mjs erzeugt
+const CACHE = "migraene-bf0c42c6fd";
 const CORE = ["./", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png"];
 
 self.addEventListener("install", e => {

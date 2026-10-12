@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-4wlQw5Fk9i+z0aThG16HlXaXWF7L5uSSxaazFWGmxrM='; style-src 'unsafe-inline'; img-src 'self'; manifest-src 'self'; worker-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-nAohl2XzXD4HA1jgxmZ/HgIdoBMa9V5uqrNVazENG5A='; style-src 'unsafe-inline'; img-src 'self'; manifest-src 'self'; worker-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Migräne-Tagebuch</title>
 <meta name="description" content="Persönliches Tagebuch für Migräne und Kopfschmerzen">
@@ -1202,7 +1202,7 @@ document.addEventListener("submit", e => {
   if (!form) return;
   e.preventDefault();
   const K = KINDS[form.dataset.form], input = form.querySelector("input");
-  const val = input.value.trim().replace(/\s+/g, " ");
+  const val = input.value.trim().replace(/\s+/g, " ").replace(/\|/g, "/"); // „|“ trennt Einträge in der CSV
   if (!val) { input.focus(); return; }
   const low = val.toLowerCase();
   const existing = [...K.defaults, ...S[K.custom]].find(x => x.toLowerCase() === low || nameOf(x).toLowerCase() === low || canonical(val) === x);
