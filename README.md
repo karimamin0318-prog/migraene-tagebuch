@@ -20,6 +20,6 @@ Danach die App über das Symbol starten (funktioniert auch offline).
 
 - `docs/index.html` – die komplette App (HTML, CSS und JavaScript in einer Datei)
 - `docs/sw.js`, `docs/manifest.webmanifest`, Icons – werden von `build.mjs` erzeugt
-- `node build.mjs` – nach jeder Änderung an `docs/index.html` ausführen (neue Versionsnummer, damit die Offline-Kopie auf dem Handy aktualisiert wird)
+- `node build.mjs` – trägt die Sicherheitsrichtlinie (Prüfsumme des Skripts) ein und erzeugt Service Worker, Manifest und Icons. Läuft automatisch: beim Veröffentlichen über GitHub Actions (`.github/workflows/pages.yml`) und lokal vor jedem Commit (Git-Hook `.git/hooks/pre-commit`, muss nach einem neuen Klonen einmal angelegt werden).
 
 Die Daten liegen im Browser-Speicher unter dem Schlüssel `migraene-tagebuch-v1:local`. Diesen Namen nicht ändern, sonst findet die App vorhandene Einträge nicht mehr.

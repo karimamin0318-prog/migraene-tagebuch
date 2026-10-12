@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-89nU+h+pIg+E5f/3Hck1qTSKRnegDqPpqzgeM/RC5Xs='; style-src 'unsafe-inline'; img-src 'self'; manifest-src 'self'; worker-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-4wlQw5Fk9i+z0aThG16HlXaXWF7L5uSSxaazFWGmxrM='; style-src 'unsafe-inline'; img-src 'self'; manifest-src 'self'; worker-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Migräne-Tagebuch</title>
 <meta name="description" content="Persönliches Tagebuch für Migräne und Kopfschmerzen">
@@ -791,7 +791,7 @@ function renderNotes() {
     return;
   }
   const groups = new Map();
-  items.forEach(it => { const ym = it[0].slice(0, 7); groups.set(ym, [...(groups.get(ym) || []), it]); });
+  items.forEach(it => { const ym = it[0].slice(0, 7); (groups.get(ym) ?? groups.set(ym, []).get(ym)).push(it); });
   box.innerHTML = [...groups].map(([ym, list]) =>
     `<div class="monthgroup"><div class="eyebrow">${fmtMonth.format(parseKey(ym + "-01"))} ${ym.slice(0, 4)} · ${tr("nNotes", list.length)}</div>` +
     list.map(([k, d]) => `
@@ -986,7 +986,7 @@ function csvExport() {
     if (isEmptyDay(d)) return;
     rows.push([k, typeName(d.type), d.intensity || "",
       d.meds.map(m => (doseOf(d, m) > 1 ? doseOf(d, m) + "x " : "") + nameOf(m)).join(" | "),
-      d.triggers.map(nameOf).join(", "), d.symptoms.map(nameOf).join(", "), d.note]);
+      d.triggers.map(nameOf).join(" | "), d.symptoms.map(nameOf).join(" | "), d.note]);
   });
   return "﻿" + rows.map(r => r.map(cell).join(";")).join("\r\n");
 }
@@ -1042,7 +1042,8 @@ function parseImport(text, fileName) {
     if (iDate < 0) throw new Error(tr("errDate"));
     const cell = (r, i) => (i >= 0 ? r[i] || "" : "").trim();
     // Namen in beiden Sprachen erkennen und als gespeicherten (deutschen) Namen übernehmen
-    const split = (v, re) => v.split(re).map(x => canonical(x.trim())).filter(Boolean);
+    // Trenner „|“ (ab dieser Version, erlaubt Kommas in Namen); ältere Tabellen nutzen „,“
+    const split = v => v.split(v.includes("|") ? "|" : ",").map(x => canonical(x.trim())).filter(Boolean);
     rows.slice(1).forEach(r => {
       const t = cell(r, iType).toLowerCase(), meds = [], medCounts = {};
       // Medikamente enthalten Kommas („2,5 mg“), daher nur an „|“ trennen; „2x Name“ = Anzahl
@@ -1054,8 +1055,8 @@ function parseImport(text, fileName) {
       add(cell(r, iDate), {
         type: t.startsWith("mig") ? "migraine" : t.startsWith("kopf") || t.startsWith("head") ? "headache" : null,
         intensity: parseInt(cell(r, iInt), 10),
-        triggers: split(cell(r, iTrig), /[,|]/),
-        symptoms: split(cell(r, iSym), /[,|]/),
+        triggers: split(cell(r, iTrig)),
+        symptoms: split(cell(r, iSym)),
         meds, medCounts,
         note: iNote >= 0 ? r[iNote] || "" : ""
       });
@@ -1073,7 +1074,12 @@ function parseImport(text, fileName) {
 function runImport(replace) {
   const p = S.imp?.p;
   if (!p) return;
-  LIST_KEYS.forEach(k => { S[k] = replace ? p[k].slice() : union(S[k], p[k]); });
+  // Zusammenführen: eigene Einträge vereinigen, gelöschte Standardeinträge so lassen wie sie jetzt sind
+  KIND_KEYS.forEach(kind => {
+    const { custom, hidden } = KINDS[kind];
+    S[custom] = replace ? p[custom].slice() : union(S[custom], p[custom]);
+    if (replace) S[hidden] = p[hidden].slice();
+  });
   if (replace) S.days = {};
   Object.assign(S.days, p.days);
   save();
@@ -1176,7 +1182,7 @@ document.addEventListener("click", e => {
     case "range": S.range = v; renderStats(); break;
     case "lang": writeLS(LANG_KEY, v); setLang(v); renderAll(); break;
     case "install":
-      installPrompt?.prompt?.().catch?.(() => {});
+      try { installPrompt?.prompt()?.catch(() => {}); } catch {}
       installPrompt = null; renderSettings(); break;
     case "exportJson": giveFile(true); break;
     case "exportCsv": giveFile(false); break;
@@ -1331,8 +1337,16 @@ document.addEventListener("visibilitychange", () => {
   renderAll();
 });
 window.addEventListener("pagehide", flush);
-window.addEventListener("storage", e => { if (e.key === DATA_KEY) { load(); renderAll(); } });
-window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installPrompt = e; if (S.tab === "set") renderSettings(); });
+// Anderes Fenster hat gespeichert: dessen Stand übernehmen, eine hier noch ungespeicherte Notiz behalten
+window.addEventListener("storage", e => {
+  if (e.key !== DATA_KEY) return;
+  const pending = saveTimer ? S.days[S.date] : null;
+  load();
+  if (pending) { S.days[S.date] = pending; save(); }
+  renderAll();
+});
+// Chrome-eigenes Installations-Banner zulassen; das Ereignis zusätzlich für den Knopf in den Einstellungen merken
+window.addEventListener("beforeinstallprompt", e => { installPrompt = e; if (S.tab === "set") renderSettings(); });
 window.addEventListener("appinstalled", () => { installPrompt = null; if (S.tab === "set") renderSettings(); });
 
 // ---------- Start ----------
