@@ -6,7 +6,25 @@ import { createHash } from "node:crypto";
 import { deflateSync } from "node:zlib";
 
 const OUT = "docs";
-const version = createHash("sha1").update(readFileSync(`${OUT}/index.html`)).digest("hex").slice(0, 10);
+
+// ---------- Content-Security-Policy ----------
+// Nur genau dieses Skript darf laufen (Prüfsumme), keine fremden Quellen, keine eingeschleusten
+// Skripte oder onclick-Attribute. Wird bei jedem Build neu berechnet und in index.html eingetragen.
+let html = readFileSync(`${OUT}/index.html`, "utf8").replace(/\r\n/g, "\n");
+const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+if (scripts.length !== 1) throw new Error(`Erwartet genau ein <script>, gefunden: ${scripts.length}`);
+const scriptHash = createHash("sha256").update(scripts[0][1], "utf8").digest("base64");
+const csp = [
+  "default-src 'none'", `script-src 'sha256-${scriptHash}'`, "style-src 'unsafe-inline'",
+  "img-src 'self'", "manifest-src 'self'", "worker-src 'self'", "connect-src 'self'",
+  "base-uri 'none'", "form-action 'none'"
+].join("; ");
+const cspMeta = `<meta http-equiv="Content-Security-Policy" content="${csp}">`;
+const CSP_RE = /<meta http-equiv="Content-Security-Policy"[^>]*>/;
+html = CSP_RE.test(html) ? html.replace(CSP_RE, cspMeta) : html.replace('<meta charset="utf-8">', `<meta charset="utf-8">\n${cspMeta}`);
+writeFileSync(`${OUT}/index.html`, html);
+
+const version = createHash("sha1").update(html).digest("hex").slice(0, 10);
 
 // ---------- Service Worker ----------
 writeFileSync(`${OUT}/sw.js`, `// Version ${version} – wird von build.mjs erzeugt

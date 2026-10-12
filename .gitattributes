@@ -1,0 +1,4 @@
+# Immer LF: die Content-Security-Policy in docs/index.html enthält eine Prüfsumme des Skripts,
+# die nur mit exakt diesen Zeilenenden stimmt.
+* text=auto eol=lf
+*.png binary
