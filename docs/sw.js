@@ -1,6 +1,6 @@
-// Version 638a6aee5a – wird bei jedem Build neu erzeugt
-const CACHE = "migraene-638a6aee5a";
-const CORE = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png"];
+// Version cfdd4dbc2a – wird von build.mjs erzeugt
+const CACHE = "migraene-cfdd4dbc2a";
+const CORE = ["./", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
@@ -12,23 +12,17 @@ self.addEventListener("activate", e => {
 });
 self.addEventListener("fetch", e => {
   const req = e.request;
-  if (req.method !== "GET") return;
-  const url = new URL(req.url);
-  // App selbst: erst Netz (damit Updates ankommen), offline aus dem Cache
-  if (req.mode === "navigate") {
-    e.respondWith(fetch(req).then(res => {
-      const copy = res.clone();
-      caches.open(CACHE).then(c => c.put("./", copy));
-      return res;
-    }).catch(() => caches.match("./", { ignoreSearch: true })));
-    return;
-  }
-  // Schriften und eigene Dateien: aus dem Cache, im Hintergrund auffrischen
-  if (url.origin === location.origin || /fonts\.(googleapis|gstatic)\.com$/.test(url.hostname)) {
-    e.respondWith(caches.open(CACHE).then(async c => {
-      const hit = await c.match(req, { ignoreSearch: url.origin === location.origin });
-      const net = fetch(req).then(res => { if (res.ok || res.type === "opaque") c.put(req, res.clone()); return res; }).catch(() => hit);
-      return hit || net;
-    }));
-  }
+  if (req.method !== "GET" || new URL(req.url).origin !== location.origin) return;
+  e.respondWith((async () => {
+    const cache = await caches.open(CACHE);
+    if (req.mode === "navigate") {
+      // App: aktuelle Version aus dem Netz, nach 3 s (schlechter Empfang) oder offline aus dem Speicher
+      const net = fetch(req).then(res => { if (res.ok) cache.put("./", res.clone()); return res; });
+      const slow = new Promise((_, reject) => setTimeout(reject, 3000));
+      try { return await Promise.race([net, slow]); }
+      catch { return (await cache.match("./")) || net; }
+    }
+    return (await cache.match(req, { ignoreSearch: true })) ||
+      fetch(req).then(res => { if (res.ok) cache.put(req, res.clone()); return res; });
+  })());
 });

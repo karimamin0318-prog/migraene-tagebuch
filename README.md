@@ -1,10 +1,10 @@
 # Migräne-Tagebuch
 
-Persönliches Tagebuch für Migräne- und Kopfschmerztage: Trigger, Aura-Symptome, Medikamente, Notizen, Kalender und Statistik.
+Persönliches Tagebuch für Migräne- und Kopfschmerztage: Medikamente (mit Anzahl), Trigger, Aura-Symptome, Notizen, Kalender und Statistik.
 
 **App öffnen:** https://karimamin0318-prog.github.io/migraene-tagebuch/
 
-Alle Einträge bleiben auf dem Gerät, auf dem die App benutzt wird. Es gibt kein Konto und keinen Server, der die Daten speichert. Sicherungen lassen sich im Tab „Statistik“ exportieren und wieder importieren.
+Alle Einträge bleiben auf dem Gerät, auf dem die App benutzt wird. Es gibt kein Konto, keinen Server und keine Verbindung zu Drittanbietern. Sicherungen lassen sich im Tab „Statistik“ exportieren und wieder importieren; die App erinnert regelmäßig daran.
 
 ## Auf dem iPhone installieren
 
@@ -12,7 +12,10 @@ Alle Einträge bleiben auf dem Gerät, auf dem die App benutzt wird. Es gibt kei
 2. Teilen-Symbol → **Zum Home-Bildschirm**.
 3. Ab jetzt die App über das Symbol starten (funktioniert auch offline).
 
-## Entwicklung
+## Aufbau
 
-- `index.html` – Quelle der App (läuft auch als Claude-Artifact)
-- `node build.mjs` – baut daraus die eigenständige Version in `docs/` (GitHub Pages)
+- `docs/index.html` – die komplette App (HTML, CSS und JavaScript in einer Datei)
+- `docs/sw.js`, `docs/manifest.webmanifest`, Icons – werden von `build.mjs` erzeugt
+- `node build.mjs` – nach jeder Änderung an `docs/index.html` ausführen (neue Versionsnummer, damit die Offline-Kopie auf dem Handy aktualisiert wird)
+
+Die Daten liegen im Browser-Speicher unter dem Schlüssel `migraene-tagebuch-v1:local`. Diesen Namen nicht ändern, sonst findet die App vorhandene Einträge nicht mehr.
