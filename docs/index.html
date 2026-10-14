@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-nAohl2XzXD4HA1jgxmZ/HgIdoBMa9V5uqrNVazENG5A='; style-src 'unsafe-inline'; img-src 'self'; manifest-src 'self'; worker-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-ohw9pSxQrxlfDl09voXClHucKe21GYqbafVI3gglwUw='; style-src 'unsafe-inline'; img-src 'self'; manifest-src 'self'; worker-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Migräne-Tagebuch</title>
 <meta name="description" content="Persönliches Tagebuch für Migräne und Kopfschmerzen">
@@ -206,7 +206,29 @@ mark { background: var(--head-soft); color: inherit; border-radius: 3px; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .toast.action { pointer-events: auto; }
 .toast button { background: none; border: 0; color: inherit; font-weight: 700; text-decoration: underline; padding: 0 0 0 10px; }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* Anleitung: Vollbild über der App, Beispiel-Ausschnitt aus den echten Bauteilen */
+.tour { position: fixed; inset: 0; z-index: 50; background: var(--bg); overflow-y: auto; display: flex; flex-direction: column; gap: 18px; padding: calc(14px + env(safe-area-inset-top, 0px)) 16px calc(20px + env(safe-area-inset-bottom, 0px)); }
+.tour > * { width: 100%; max-width: 480px; margin-inline: auto; }
+.tour-top { display: flex; align-items: center; justify-content: space-between; min-height: 32px; }
+.tour-slide { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 12px; animation: tour-in .3s ease-out; }
+.tour-slide p { margin: 0; color: var(--muted); }
+.tour-slide p b { color: var(--fg); }
+.tour-mock { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 16px; min-height: 210px; margin-bottom: 8px; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+.tour-mock .btn { padding-inline: 12px; }
+.tour-icon, .tour-home img { width: 88px; height: 88px; border-radius: 22px; margin-inline: auto; display: block; }
+.tour-home { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 600; }
+.tour-drag { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.tour-drag .chip { box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28); transform: rotate(-3deg); }
+.tour-trash { width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--danger); background: var(--danger); color: #fff; display: grid; place-items: center; }
+.tour-trash svg { width: 28px; height: 28px; }
+.tour-note { border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: var(--bg); font-size: 0.9rem; }
+.tour-dots { display: flex; justify-content: center; gap: 6px; }
+.tour-dots i { width: 6px; height: 6px; border-radius: 3px; background: var(--line); transition: width .2s, background .2s; }
+.tour-dots i.on { width: 18px; background: var(--mig); }
+.tour-nav { display: flex; gap: 10px; }
+.tour-nav .btn { flex: 1; padding: 14px 16px; font-size: 1rem; }
+@keyframes tour-in { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } .tour-slide { animation: none; } }
 </style>
 </head>
 <body>
@@ -324,6 +346,7 @@ mark { background: var(--head-soft); color: inherit; border-radius: 3px; }
   <span data-i18n="trash"></span>
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>
 </div>
+<div class="tour" id="tour" role="dialog" aria-modal="true" aria-labelledby="tourTitle" hidden></div>
 <input type="file" id="importFile" accept=".json,.csv,.txt,application/json,text/csv,text/plain" hidden>
 
 <script>
@@ -378,6 +401,7 @@ const DATA_KEY = "migraene-tagebuch-v1:local";
 const BACKUP_KEY = "migraene-tagebuch-v1:lastBackup";
 const SNOOZE_KEY = "migraene-tagebuch-v1:backupSnooze";
 const LANG_KEY = "migraene-tagebuch-v1:lang";
+const TOUR_KEY = "migraene-tagebuch-v1:tourSeen";
 
 // ---------- Texte ----------
 const TEXT = {
@@ -452,7 +476,23 @@ const TEXT = {
     backupT: "Zeit für eine Sicherung", backupNever: "Du hast noch keine Sicherung gespeichert.", backupAgo: d => `Deine letzte Sicherung ist ${d} Tage her.`,
     backupWhy: "Deine Einträge liegen nur auf diesem Gerät. Speichere die Sicherung z. B. in iCloud Drive oder Google Drive, dann bleibt nichts verloren, auch bei einem neuen Handy.",
     backupNow: "Jetzt sichern", backupLater: "In einer Woche erinnern",
-    csvHead: ["Datum", "Art", "Stärke", "Medikamente", "Trigger", "Aura-Symptome", "Notiz"]
+    csvHead: ["Datum", "Art", "Stärke", "Medikamente", "Trigger", "Aura-Symptome", "Notiz"],
+    tourSkip: "Überspringen", tourNext: "Weiter", tourDone: "Los geht’s", tourStep: (i, n) => `${i} von ${n}`,
+    tourT: "Tutorial", tourInfo: "Alle Funktionen in einer Minute erklärt.", tourOpen: "Tutorial starten",
+    tourNoteEx: "Ab 14 Uhr, Ibuprofen hat nach einer Stunde geholfen.",
+    tour: [
+      ["Willkommen", "Dein Tagebuch für Migräne und Kopfschmerzen. Ein Eintrag pro Tag, in wenigen Sekunden. Hier ein kurzer Rundgang."],
+      ["Was war heute?", "Tippe auf <b>Migräne</b> oder <b>Kopfschmerzen</b> und wähle die Stärke von 1 bis 10. Nochmals tippen hebt die Auswahl auf."],
+      ["Medikamente", "Tippe an, was du genommen hast. Mit <b>+</b> und <b>−</b> stellst du ein, wie viele Tabletten es waren."],
+      ["Trigger & Vorboten", "Wähle, was der Attacke vorausging und welche Aura-Symptome du hattest. Fehlt etwas? Über <b>+ Eigener …</b> fügst du es hinzu."],
+      ["Liste aufräumen", "Einen Eintrag <b>gedrückt halten</b> und in den Papierkorb ziehen. Bereits erfasste Tage bleiben unverändert, und mit <b>Rückgängig</b> ist er sofort zurück."],
+      ["Notiz & andere Tage", "Unter <b>Notiz</b> ist Platz für alles Weitere, sie speichert sich von selbst. Mit <b>‹</b> und <b>›</b> wechselst du den Tag, um etwas nachzutragen."],
+      ["Kalender", "Der Monat auf einen Blick: lila ist Migräne, orange sind Kopfschmerzen, ein Punkt heißt „Details erfasst“. Tippe auf einen Tag, um ihn zu öffnen."],
+      ["Notizen", "Alle Notizen gesammelt, nach Monaten sortiert. Die Suche findet auch Medikamente und Trigger."],
+      ["Statistik", "Wie oft, wie stark und was am häufigsten auslöst. Oben wählst du den Zeitraum. Praktisch fürs Arztgespräch."],
+      ["Sicherung", "Deine Daten liegen nur auf diesem Handy, ohne Konto. Speichere unter <b>Einstellungen</b> ab und zu eine Sicherung, z. B. in iCloud Drive. Die Tabelle (CSV) ist praktisch für den Arzttermin."],
+      ["Auf den Home-Bildschirm", "So startet die App wie jede andere, auch ohne Internet. Diese Anleitung findest du jederzeit unter <b>Einstellungen</b>."]
+    ]
   },
   en: {
     locale: "en-GB", appTitle: "Migraine Diary", file: "migraine-diary",
@@ -525,7 +565,23 @@ const TEXT = {
     backupT: "Time for a backup", backupNever: "You haven't saved a backup yet.", backupAgo: d => `Your last backup was ${d} days ago.`,
     backupWhy: "Your entries only live on this device. Save the backup to iCloud Drive or Google Drive, for example, so nothing gets lost, even with a new phone.",
     backupNow: "Back up now", backupLater: "Remind me in a week",
-    csvHead: ["Date", "Type", "Intensity", "Medication", "Triggers", "Aura symptoms", "Note"]
+    csvHead: ["Date", "Type", "Intensity", "Medication", "Triggers", "Aura symptoms", "Note"],
+    tourSkip: "Skip", tourNext: "Next", tourDone: "Get started", tourStep: (i, n) => `${i} of ${n}`,
+    tourT: "Tutorial", tourInfo: "Every feature explained in a minute.", tourOpen: "Start tutorial",
+    tourNoteEx: "From 2 pm, ibuprofen helped after an hour.",
+    tour: [
+      ["Welcome", "Your diary for migraine and headaches. One entry per day, done in seconds. Here's a quick tour."],
+      ["How was today?", "Tap <b>Migraine</b> or <b>Headache</b> and pick the intensity from 1 to 10. Tap again to undo."],
+      ["Medication", "Tap what you took. Use <b>+</b> and <b>−</b> to set how many tablets."],
+      ["Triggers & warning signs", "Pick what came before the attack and which aura symptoms you had. Something missing? Add it with <b>+ Own …</b>."],
+      ["Tidy up the list", "<b>Press and hold</b> an entry, then drag it to the bin. Days you already logged stay unchanged, and <b>Undo</b> brings it right back."],
+      ["Notes & other days", "Use <b>Note</b> for anything else, it saves by itself. Use <b>‹</b> and <b>›</b> to switch days and fill in the past."],
+      ["Calendar", "The month at a glance: purple is migraine, orange is headache, a dot means details were logged. Tap a day to open it."],
+      ["Notes", "All your notes in one place, sorted by month. Search also finds medication and triggers."],
+      ["Stats", "How often, how bad, and what triggers it most. Pick the time range at the top. Handy for doctor's appointments."],
+      ["Backup", "Your data lives only on this phone, with no account. Now and then, save a backup under <b>Settings</b>, e.g. to iCloud Drive. You can send the spreadsheet (CSV) to your doctor."],
+      ["Add to home screen", "Then the app opens like any other, even offline. You'll find this guide again under <b>Settings</b>."]
+    ]
   }
 };
 let lang = "de", L = TEXT.de;
@@ -935,6 +991,7 @@ function renderSettings() {
     `</div></div>` +
     dataPanel() +
     `<div class="panel"><h2>${tr("installT")}</h2>${install}</div>` +
+    `<div class="panel"><h2>${tr("tourT")}</h2><p class="muted small">${tr("tourInfo")}</p><div><button class="btn ghost" data-act="tourOpen">${tr("tourOpen")}</button></div></div>` +
     `<div class="panel"><h2>${tr("aboutT")}</h2><p class="muted small">${tr("about")}</p></div>`;
 }
 
@@ -1130,6 +1187,75 @@ function renderBackupHint() {
     <div class="btnrow"><button class="btn" data-act="exportJson">${tr("backupNow")}</button><button class="btn ghost" data-act="backupLater">${tr("backupLater")}</button></div>`;
 }
 
+// ---------- Anleitung (beim ersten Start, danach über die Einstellungen) ----------
+let tourStep = null; // null = geschlossen
+
+// Beispiel-Ausschnitt je Schritt, gebaut aus denselben Klassen wie die echte Oberfläche
+function tourMock(i) {
+  const chip = (v, on, cls = "") => `<span class="chip${cls}" aria-pressed="${on}">${esc(nameOf(v))}</span>`;
+  const svg = id => $(id).querySelector("svg").outerHTML;
+  const yesterday = parseKey(addDays(todayKey(), -1));
+  const cal = { 3: "mig", 6: "head", 10: "mig", 13: "head" }, dots = [3, 9, 10];
+  switch (i) {
+    case 0: return `<img class="tour-icon" src="icon-192.png" alt="">`;
+    case 1: return `<div class="choice">
+        <div class="bigbtn mig" aria-pressed="true">${svg("btnMig")}<span>${tr("migraine")}</span><small>${tr("subLogged")}</small></div>
+        <div class="bigbtn head">${svg("btnHead")}<span>${tr("headache")}</span><small>${tr("subToday")}</small></div></div>
+      <div class="scale" data-type="migraine">${Array.from({ length: 10 }, (_, j) => `<button aria-pressed="${j === 6}">${j + 1}</button>`).join("")}</div>`;
+    case 2: return `<div class="chips">${chip(DEFAULT_MEDS[0], true)}${chip(DEFAULT_MEDS[1], false)}<span class="chip add">+ ${tr("addM")}</span></div>
+      <div class="doses"><div class="dose"><span class="dose-name">${esc(nameOf(DEFAULT_MEDS[0]))}</span><span class="step">−</span><span class="dose-n">2×</span><span class="step">+</span></div></div>`;
+    case 3: return `<div class="chips">${chip("Stress", true)}${chip("Schlafrhythmus", false)}${chip("Wetterumschwung", true)}${chip("Zu wenig getrunken", false)}${chip("Sehstörungen", true)}<span class="chip add">+ ${tr("addT")}</span></div>`;
+    case 4: return `<div class="tour-drag">${chip("Rotwein", true)}<span class="muted">→</span><span class="tour-trash">${$("trash").querySelector("svg").outerHTML}</span></div>`;
+    case 5: return `<div class="dayhead"><span class="iconbtn">‹</span><div class="center"><div class="eyebrow">${tr("yesterday")}</div><h2>${fmtLong.format(yesterday)}</h2></div><span class="iconbtn">›</span></div>
+      <div class="tour-note">${tr("tourNoteEx")}</div>`;
+    case 6: return `<div class="cal">${L.weekdays.map(w => `<div class="wd">${w}</div>`).join("")}${Array.from({ length: 14 }, (_, j) =>
+      `<div class="cell ${cal[j + 1] || ""}">${j + 1}<span class="dot${dots.includes(j + 1) ? "" : " none"}"></span></div>`).join("")}</div>`;
+    case 7: return `<div class="search muted">${tr("searchPh")}</div>
+      <div class="note-item"><div class="top"><strong>${fmtShort.format(yesterday)}</strong><span class="badge mig">${tr("migraine")} · 7/10</span></div>
+        <p>${tr("tourNoteEx")}</p><div class="minichips"><span class="med">2× ${esc(nameOf(DEFAULT_MEDS[0]))}</span><span>${esc(nameOf("Stress"))}</span></div></div>`;
+    case 8: return `<div class="seg">${RANGES.map(v => `<button aria-pressed="${v === "90"}">${tr("r" + v)}</button>`).join("")}</div>
+      <div class="tiles"><div class="tile mig"><b>4</b><span>${tr("migDays")}</span></div><div class="tile head"><b>2</b><span>${tr("headDays")}</span></div></div>
+      <div class="rank-row" style="--fill:var(--mig)"><span class="pos">1.</span><span class="name">${esc(nameOf("Stress"))}</span><span class="val">3×</span><span class="bar"><i style="width:75%"></i></span></div>`;
+    case 9: return `<div class="btnrow"><span class="btn ghost">${tr("saveBackup")}</span><span class="btn ghost">${tr("csvBtn")}</span></div><span class="muted small">${tr("lastBackup", 0)}</span>`;
+    default: return `<div class="tour-home"><img src="apple-touch-icon.png" alt=""><span>Migräne</span></div>`;
+  }
+}
+
+function renderTour() {
+  const box = $("tour"), open = tourStep !== null;
+  box.hidden = !open;
+  // Hintergrund für Tastatur und Screenreader sperren, solange die Anleitung offen ist
+  document.querySelector(".app").inert = open;
+  document.querySelector(".tabbar").inert = open;
+  if (!open) return;
+  const n = L.tour.length, last = tourStep === n - 1;
+  let [title, body] = L.tour[tourStep];
+  if (last) body = tr(isStandalone() ? "installed" : isIOS ? "installIos" : "installOther") + " " + body;
+  box.innerHTML = `<div class="tour-top"><span class="eyebrow">${tr("tourStep", tourStep + 1, n)}</span>${last ? "" : `<button class="linkbtn" data-act="tourEnd">${tr("tourSkip")}</button>`}</div>
+    <div class="tour-slide"><div class="tour-mock" inert aria-hidden="true">${tourMock(tourStep)}</div><h1 id="tourTitle">${title}</h1><p>${body}</p></div>
+    <div class="tour-dots" aria-hidden="true">${L.tour.map((_, j) => `<i${j === tourStep ? ' class="on"' : ""}></i>`).join("")}</div>
+    <div class="tour-nav"><button class="btn ghost" data-act="tourBack"${tourStep ? "" : " hidden"}>${tr("back")}</button><button class="btn" id="tourNext" data-act="tourNext">${tr(last ? "tourDone" : "tourNext")}</button></div>`;
+  box.scrollTop = 0;
+  $("tourNext").focus({ preventScroll: true });
+}
+function tourGo(step) {
+  if (step >= L.tour.length) { writeLS(TOUR_KEY, "1"); step = null; }
+  if (step === null || step >= 0) { tourStep = step; renderTour(); }
+}
+// Wischen wie in anderen Apps; nur waagerecht, damit Scrollen auf kleinen Displays weiter geht
+let tourTouch = null;
+$("tour").addEventListener("touchstart", e => { tourTouch = e.touches[0]; }, { passive: true });
+$("tour").addEventListener("touchend", e => {
+  const t = e.changedTouches[0], dx = t.clientX - tourTouch.clientX, dy = t.clientY - tourTouch.clientY;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > 2 * Math.abs(dy) && tourStep + (dx < 0 ? 1 : -1) < L.tour.length) tourGo(tourStep + (dx < 0 ? 1 : -1));
+});
+document.addEventListener("keydown", e => {
+  if (tourStep === null) return;
+  if (e.key === "Escape") tourGo(L.tour.length);
+  else if (e.key === "ArrowRight" && tourStep < L.tour.length - 1) tourGo(tourStep + 1);
+  else if (e.key === "ArrowLeft") tourGo(tourStep - 1);
+});
+
 // ---------- Tabs (die Android-Zurück-Taste führt von anderen Tabs zurück zu „Tag“) ----------
 const TABS = { tag: renderTag, cal: renderCal, notes: renderNotes, stats: renderStats, set: renderSettings };
 function renderAll() {
@@ -1193,6 +1319,10 @@ document.addEventListener("click", e => {
     case "importBack": S.imp.confirm = false; renderSettings(); break;
     case "importReplaceGo": runImport(true); break;
     case "importCancel": S.imp = null; S.importMsg = ""; renderSettings(); break;
+    case "tourOpen": tourGo(0); break;
+    case "tourNext": tourGo(tourStep + 1); break;
+    case "tourBack": tourGo(tourStep - 1); break;
+    case "tourEnd": tourGo(L.tour.length); break;
   }
 });
 
@@ -1354,6 +1484,7 @@ setLang(readLS(LANG_KEY) || ((navigator.language || "de").toLowerCase().startsWi
 load();
 history.replaceState(null, "");
 renderAll();
+if (!readLS(TOUR_KEY)) tourGo(0);
 try { navigator.storage?.persist?.()?.catch(() => {}); } catch {}
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
   navigator.serviceWorker.register("sw.js").catch(() => {});

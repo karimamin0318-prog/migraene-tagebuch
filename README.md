@@ -4,7 +4,7 @@ Persönliches Tagebuch für Migräne- und Kopfschmerztage: Medikamente (mit Anza
 
 **App öffnen:** https://karimamin0318-prog.github.io/migraene-tagebuch/
 
-Alle Einträge bleiben auf dem Gerät, auf dem die App benutzt wird. Es gibt kein Konto, keinen Server und keine Verbindung zu Drittanbietern. Sicherungen lassen sich im Tab „Statistik“ exportieren und wieder importieren; die App erinnert regelmäßig daran.
+Alle Einträge bleiben auf dem Gerät, auf dem die App benutzt wird. Es gibt kein Konto, keinen Server und keine Verbindung zu Drittanbietern. Sicherungen lassen sich im Tab „Einstellungen“ exportieren und wieder importieren; die App erinnert regelmäßig daran.
 
 Sprache: Deutsch oder Englisch (Tab „Einstellungen“).
 
