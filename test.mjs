@@ -25,22 +25,26 @@ const { S, parseImport, runImport, csvExport, jsonExport, load } = ctx.T;
 
 const day = {
   type: "migraine", intensity: 7, meds: ["Zolmitriptan 2,5 mg"], medCounts: { "Zolmitriptan 2,5 mg": 2 },
-  triggers: ["Stress", "Wein, rot"], symptoms: ["Sehstörungen"], note: "=Kopf; \"schlimm\"\nzweite Zeile"
+  triggers: ["Stress", "Wein, rot"], symptoms: ["Sehstörungen"], painSymptoms: ["Lichtempfindlichkeit", "Ohrensausen"], note: "=Kopf; \"schlimm\"\nzweite Zeile"
 };
 const fresh = () => {
   S.days = { "2026-10-01": structuredClone(day) };
   S.customTriggers = ["Wein, rot"]; S.hiddenTriggers = ["Alkohol"];
   S.customMeds = []; S.hiddenMeds = []; S.customSymptoms = []; S.hiddenSymptoms = [];
+  S.customPainSymptoms = ["Ohrensausen"]; S.hiddenPainSymptoms = ["Erbrechen"];
+  S.orderTriggers = ["Stress", "Wein, rot"]; S.sectionOrder = ["B", "M", "T", "S"];
 };
 const importText = (text, name, replace) => { S.imp = { p: parseImport(text, name) }; runImport(replace); };
 
 // JSON: alles kommt unverändert zurück
 fresh();
 const json = jsonExport();
-S.days = {}; S.customTriggers = []; S.hiddenTriggers = [];
+S.days = {}; S.customTriggers = []; S.hiddenTriggers = []; S.customPainSymptoms = []; S.hiddenPainSymptoms = []; S.orderTriggers = []; S.sectionOrder = [];
 importText(json, "b.json", true);
 assert.deepEqual(S.days["2026-10-01"], day);
 assert.deepEqual([S.customTriggers, S.hiddenTriggers], [["Wein, rot"], ["Alkohol"]]);
+assert.deepEqual([S.customPainSymptoms, S.hiddenPainSymptoms], [["Ohrensausen"], ["Erbrechen"]]);
+assert.deepEqual([S.orderTriggers, S.sectionOrder], [["Stress", "Wein, rot"], ["B", "M", "T", "S"]]);
 
 // CSV: Kommas in Namen, Anzahl, Notiz mit Sonderzeichen; Formel-Schutz wird beim Import entfernt
 fresh();
@@ -48,6 +52,7 @@ const csv = csvExport();
 S.days = {};
 importText(csv, "b.csv", true);
 assert.deepEqual(S.days["2026-10-01"].triggers, day.triggers);
+assert.deepEqual(S.days["2026-10-01"].painSymptoms, day.painSymptoms);
 assert.deepEqual(S.days["2026-10-01"].medCounts, day.medCounts);
 assert.equal(S.days["2026-10-01"].note.replace(/^'/, ""), day.note);
 

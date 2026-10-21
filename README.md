@@ -1,6 +1,6 @@
 # Migräne-Tagebuch
 
-Persönliches Tagebuch für Migräne- und Kopfschmerztage: Medikamente (mit Anzahl), Trigger, Aura-Symptome, Notizen, Kalender und Statistik.
+Persönliches Tagebuch für Migräne- und Kopfschmerztage: Medikamente (mit Anzahl), Symptome während der Schmerzen, Trigger, Aura-Symptome, Notizen, Kalender und Statistik.
 
 **App öffnen:** https://karimamin0318-prog.github.io/migraene-tagebuch/
 
